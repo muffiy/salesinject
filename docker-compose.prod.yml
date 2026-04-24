@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: salesinject-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: salesinject
+    # No host port exposed — only reachable internally
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - salesinject-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: salesinject-redis
+    restart: unless-stopped
+    networks:
+      - salesinject-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Run Alembic migrations before backend starts ────────────────────────────
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-migrate
+    env_file: ./backend/.env
+    command: alembic upgrade head
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    restart: "no"   # run once and exit
+
+  # ── FastAPI backend (gunicorn, 2 workers for 2GB RAM) ──────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      - USE_WEBHOOK=true
+      - DEBUG=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - salesinject-internal
+    # 3 workers: tuned for 3.8GB Hostinger KVM
+    command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker --workers 3 --bind 0.0.0.0:8000 --timeout 120 --log-level info
+    deploy:
+      resources:
+        limits:
+          memory: 800M
+
+  # ── Celery worker (concurrency 2 for 2GB RAM) ───────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=3
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+
+  # ── Celery Beat ─────────────────────────────────────────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-beat
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app beat --loglevel=info
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
+  # ── Frontend (nginx static) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Points the React app at the VPS nginx (no domain yet = use IP)
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    container_name: salesinject-frontend
+    restart: unless-stopped
+    networks:
+      - salesinject-internal
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+
+  # ── nginx reverse proxy (public-facing) ─────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: salesinject-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"   # ready for SSL — no cert needed yet
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/salesinject.conf:ro
+      # Certbot SSL (uncomment when you have a domain):
+      # - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - salesinject-internal
+    deploy:
+      resources:
+        limits:
+          memory: 50M
+
+volumes:
+  postgres_data:
+
+networks:
+  salesinject-internal:
+    driver: bridge

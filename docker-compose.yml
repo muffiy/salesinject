@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: salesinject-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: salesinject
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - salesinject-internal
+
+  # ── Redis (Celery broker + result backend) ─────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: salesinject-redis
+    restart: unless-stopped
+    networks:
+      - salesinject-internal
+    # Redis is internal-only — no host port exposed
+
+  # ── OpenClaw AI worker ─────────────────────────────────────────────────────
+  openclaw-worker:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: salesinject-openclaw
+    restart: unless-stopped
+    environment:
+      - OPENCLAW_PORT=18789
+    networks:
+      - salesinject-internal
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    # Port is intentionally NOT published to the host — only reachable from
+    # within salesinject-internal as http://openclaw-worker:18789
+
+  # ── FastAPI backend ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - openclaw-worker
+    networks:
+      - salesinject-internal
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Celery worker ──────────────────────────────────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      - redis
+      - db
+      - openclaw-worker
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=4
+
+  # ── Celery Beat (periodic tasks — ad scraping) ─────────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-beat
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      - redis
+      - db
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app beat --loglevel=info
+
+volumes:
+  postgres_data:
+
+networks:
+  salesinject-internal:
+    driver: bridge
