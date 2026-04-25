@@ -21,6 +21,8 @@
   - `gunicorn` added to `requirements.txt`
 - **Production hardening:** Debug RLS endpoint guarded behind `if settings.DEBUG`; no host port exposed for backend (only nginx public); Postgres credentials moved to env vars
 - **To activate HTTPS when domain is ready:** Uncomment HTTPS block in `nginx/nginx.conf`, run `certbot --nginx -d yourdomain.com`
+- **Source Control:** Initialized Git, created `.gitignore`, and pushed code to GitHub (`muffiy/salesinject`).
+- **AI Tooling:** Configured Anthropic Claude Code CLI to route through OpenRouter (`openrouter/free`) by formatting `~/.claude/settings.json` properly with the user's API key.
 
 ### [2026-04-24]
 - **Backend Intelligence Pipeline — Scout Mission**: Completed the full tool-use layer for Scout missions.

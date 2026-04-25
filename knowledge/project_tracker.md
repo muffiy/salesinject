@@ -41,6 +41,17 @@ This file serves as the central hub for tracking the development progress of the
 - [ ] **Pending:** Get domain → uncomment HTTPS block in `nginx/nginx.conf` → run Certbot
 - [ ] **Pending:** Set Telegram webhook URL to `http://VPS_IP/webhook/telegram` (or domain when ready)
 
+### 5. Source Control & AI Tooling
+- [x] Initialized Git repository and created root `.gitignore`
+- [x] Linked and pushed codebase to GitHub (`muffiy/salesinject`)
+- [x] Configured Anthropic Claude Code CLI to route through OpenRouter API (`openrouter/free` model)
+- [x] Setup Antigravity IDE to use OpenRouter API keys
+
+### 6. Comprehensive Documentation
+- [x] Created comprehensive hosting guide (`knowledge/hosting_guide.md`)
+- [x] Created deployment cheat sheet (`knowledge/deployment_cheatsheet.md`)
+- [x] Consolidated all knowledge documentation in `.claude/projects` directory
+
 ---
 
 ## 🚧 Still genuinely in progress
