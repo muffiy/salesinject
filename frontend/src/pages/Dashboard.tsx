@@ -26,9 +26,6 @@ interface Task {
   status: string;
 }
 
-const RANK_COLORS: Record<string, string> = {
-  bronze: '#CD7F32', silver: '#C0C0C0', gold: '#FFD700', platinum: '#E5E4E2', diamond: '#00E5FF',
-};
 
 const MOCK_MAP_DATA: MapDataPoint[] = [
   { id: '1', name: 'OpenAI Marketing Bot', lat: 37.7749, lon: -122.4194, type: 'agent', extraData: { niche: 'SaaS', tasks: 120 } },
@@ -38,15 +35,14 @@ const MOCK_MAP_DATA: MapDataPoint[] = [
   { id: '5', name: 'London Finance Agent', lat: 51.5074, lon: -0.1278, type: 'agent', extraData: { niche: 'Crypto', active: true } },
 ];
 
-export function Dashboard({ user, onNavigate }: DashboardProps) {
+export function Dashboard({ user: _user, onNavigate }: DashboardProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [hotTasks, setHotTasks] = useState<Task[]>([]);
   const [scouting, setScouting] = useState(false);
   const [scoutError, setScoutError] = useState('');
   const [mapData, setMapData] = useState<MapDataPoint[]>(MOCK_MAP_DATA);
   
-  const displayName = user?.first_name || 'Creator';
-
+  
   const refreshScoutResults = async () => {
     try {
       const data = await getLatestScout();

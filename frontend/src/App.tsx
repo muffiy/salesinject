@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useTelegramUser } from './hooks/useTelegramUser';
 import { authenticate, refreshToken } from './services/api';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { NavBar } from './components/UI';
 import { Dashboard } from './pages/Dashboard';
 import { Tasks } from './pages/Tasks';
 import { Agents } from './pages/Agents';
