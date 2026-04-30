@@ -17,7 +17,9 @@
       "Bash(curl -sf http://2a02:4780:7:7783::1/)",
       "Bash(curl -sv http://localhost/api/v1/health/)",
       "Bash(npm run *)",
-      "Bash(docker system *)"
+      "Bash(docker system *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
