@@ -1,26 +1,68 @@
-import { useState, useEffect } from 'react';
-import { GlobalMap } from '../components/Map';
-import type { MapDataPoint } from '../components/DeckGLMap';
+import React, { useState, useEffect } from 'react';
+import DeckGLMap from '../components/DeckGLMap';
+import GenZOverlay from '../components/GenZOverlay';
+import { getLatestScoutReport, getOffers } from '../services/api';
 
-export function MapPage() {
-  const [data, setData] = useState<MapDataPoint[]>([]);
+export default function MapPage() {
+  const [mapData, setMapData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulated live targets
-    setData([
-      { id: '1', name: 'TARGET ALPHA', address: 'New York', lon: -74.006, lat: 40.7128, type: 'bounty', status: 'active', extraData: { bounty: 500, risk: 'HIGH' } },
-      { id: '2', name: 'MERC OUTPOST', address: 'London', lon: -0.1276, lat: 51.5072, type: 'agent', status: 'idle', extraData: { agents: 12, status: 'STANDBY' } },
-      { id: '3', name: 'TARGET BETA', address: 'Tokyo', lon: 139.6917, lat: 35.6895, type: 'bounty', status: 'active', extraData: { bounty: 1200, risk: 'EXTREME' } }
-    ]);
+    async function loadData() {
+      try {
+        const combinedData: any[] = [];
+        
+        // 1. Load active offers
+        try {
+          const offers = await getOffers();
+          const offerPoints = offers.map((o: any) => ({
+            coordinates: [o.lon, o.lat],
+            name: o.title,
+            discount: o.discount_value > 0 ? `${o.discount_value}%` : null,
+            bounty: o.bounty_value > 0 ? `${o.bounty_value} TND` : null,
+            type: 'offer',
+            id: o.id
+          }));
+          combinedData.push(...offerPoints);
+        } catch (err) {
+          console.error("Failed to load offers:", err);
+        }
+
+        // 2. Load latest scout report influencers
+        try {
+          const report = await getLatestScoutReport();
+          if (report && report.map_data) {
+             combinedData.push(...report.map_data);
+          }
+        } catch (err) {
+          console.error("Failed to load scout report:", err);
+        }
+
+        setMapData(combinedData);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 0, background: 'var(--war-black)' }}>
-      <GlobalMap data={data} />
-      <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10, pointerEvents: 'none' }}>
-        <h1 className="section-title" style={{ fontSize: '32px', color: 'var(--war-cyan)', textShadow: '0 0 20px rgba(0,245,255,0.5)' }}>GLOBAL WAR ROOM</h1>
-        <div className="label" style={{ color: 'white', background: 'var(--war-red)', display: 'inline-block', padding: '4px 8px' }}>LIVE TARGET TRACKING</div>
-      </div>
+    <div className="relative w-screen h-screen bg-[var(--war-black)]">
+      {loading ? (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--war-black)] text-[var(--war-cyan)] font-mono">
+          <div className="animate-pulse">Loading Map Data...</div>
+        </div>
+      ) : null}
+      
+      <DeckGLMap data={mapData} />
+      <GenZOverlay />
+      
+      {/* 
+        Optional: To show PaperclipSidebar if you want it overlayed on the map,
+        you could add a toggle state to render it here floating over the map.
+        The UI uses GenZOverlay for standard nav right now.
+      */}
     </div>
   );
 }

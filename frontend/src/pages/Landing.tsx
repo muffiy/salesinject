@@ -1,19 +1,36 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export function Landing() {
+export default function Landing() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div style={{ background: 'var(--war-black)', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
-      <h1 className="hero-title" style={{ marginBottom: '24px' }}>SALESINJECT</h1>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--si-muted)', marginBottom: '40px', maxWidth: '600px' }}>
-        Weaponize your Ad Campaigns with AI Mercenaries. Deploy agents to scout, match, and conquer your target niches.
-      </p>
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-[var(--war-black)] text-white overflow-hidden relative">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[rgba(255,42,95,0.15)] via-[var(--war-black)] to-[var(--war-black)] z-0"></div>
       
-      <a href="https://t.me/SalesInjectBot" className="btn-primary" style={{ textDecoration: 'none', padding: '20px 40px', fontSize: '20px' }}>
-        <span className="btn-text">DEPLOY YOUR AGENTS</span>
-      </a>
-
-      {/* Background aesthetics */}
-      <div className="btn-glow" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '400px', opacity: 0.1, zIndex: 0, pointerEvents: 'none' }} />
+      <div className="z-10 flex flex-col items-center max-w-md text-center px-6">
+        <h1 className="text-5xl font-bold mb-4 text-gradient font-mono">SALESINJECT</h1>
+        <p className="text-gray-400 mb-8 text-lg">
+          Turn everyday content into viral campaigns. Claim bounties, conquer the map.
+        </p>
+        
+        {isAuthenticated ? (
+          <button 
+            onClick={() => navigate('/app/map')}
+            className="w-full py-4 rounded-xl bg-[var(--war-pink)] text-white font-bold text-lg shadow-neon-primary transition-transform hover:scale-105 active:scale-95"
+          >
+            ENTER WAR MAP
+          </button>
+        ) : (
+          <button 
+            onClick={() => alert("Please open inside Telegram")}
+            className="w-full py-4 rounded-xl bg-gray-800 text-gray-300 font-bold text-lg"
+          >
+            OPEN IN TELEGRAM
+          </button>
+        )}
+      </div>
     </div>
   );
 }

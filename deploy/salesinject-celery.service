@@ -1,0 +1,16 @@
+[Unit]
+Description=SalesInject Celery worker
+After=network.target redis-server.service
+
+[Service]
+User=salesinject
+Group=salesinject
+WorkingDirectory=/opt/salesinject
+EnvironmentFile=/opt/salesinject/.env
+ExecStart=/opt/salesinject/.venv/bin/celery -A app.worker.celery_app worker -l info -c 4
+Restart=on-failure
+RestartSec=10
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

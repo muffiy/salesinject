@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getPaperclips } from '../services/api';
+import { ContactDetailCard } from '../components/ContactDetailCard';
+import type { ContactProfileData } from '../components/ContactDetailCard';
 
 export interface PaperclipItemData {
   id: string;
@@ -12,9 +14,9 @@ export interface PaperclipItemData {
 export function PaperclipSidebar() {
   const [items, setItems] = useState<PaperclipItemData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mark as viewed in localStorage to clear the red dot badge in App.tsx
     localStorage.setItem('salesinject_last_viewed_paperclips', new Date().toISOString());
     window.dispatchEvent(new Event('paperclipsViewed'));
 
@@ -34,181 +36,162 @@ export function PaperclipSidebar() {
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
 
-  const renderSkeleton = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
-      {[1, 2, 3].map(i => (
-        <div key={i} style={{ 
-          height: i === 1 ? '80px' : i === 2 ? '60px' : '120px', 
-          background: 'rgba(255,255,255,0.03)', 
-          borderRadius: '8px',
-          border: '1px solid var(--war-gray-700)',
-          animation: 'pulse 1.5s infinite ease-in-out'
-        }} />
-      ))}
-      <style>
-        {`
-          @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 0.3; }
-            100% { opacity: 0.6; }
-          }
-        `}
-      </style>
-    </div>
-  );
+  const handleCopy = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      console.log('Copy to clipboard requires a secure context (or use fallback).');
+    }
+  };
 
-  const renderEmptyState = () => (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      flex: 1,
-      minHeight: '400px',
-      color: 'var(--war-cyan)',
-      opacity: 0.6,
-      textAlign: 'center',
-      padding: '24px'
-    }}>
-      <div style={{ fontSize: '32px', marginBottom: '16px' }}>📭</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: '700', letterSpacing: '0.5px' }}>
-        No Intel Yet — Run a Scout Mission
-      </div>
-    </div>
-  );
+  const chipColor = (idx: number) => {
+    const colors = ['text-brand-yellow border-brand-yellow', 'text-brand-pink border-brand-pink', 'text-brand-green border-brand-green'];
+    return colors[idx % colors.length];
+  };
 
-  const renderMissionLog = (item: PaperclipItemData) => (
-    <div key={item.id} style={{
-      padding: '16px',
-      border: '1px solid var(--war-cyan)',
-      background: 'rgba(0, 229, 255, 0.05)',
-      borderRadius: '8px',
-      borderLeft: '4px solid var(--war-cyan)',
-      marginBottom: '16px'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <span style={{ fontSize: '16px' }}>📡</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--war-cyan)', fontWeight: '700' }}>MISSION LOG</span>
-        <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--si-muted)', fontFamily: 'var(--font-mono)' }}>
-          {formatDate(item.created_at)}
-        </span>
-      </div>
-      <div style={{ fontSize: '13px', color: 'var(--si-fg)', lineHeight: 1.5 }}>
-        {item.content.report || JSON.stringify(item.content)}
-      </div>
-    </div>
-  );
-
-  const renderPinnedProfile = (item: PaperclipItemData) => {
-    const data = item.content || {};
+  if (loading) {
     return (
-      <div key={item.id} style={{
-        padding: '12px 16px',
-        border: '1px solid var(--war-gray-700)',
-        background: 'var(--war-black)',
-        borderRadius: '8px',
-        marginBottom: '16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--war-purple), var(--war-gray-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>
-            {data.handle ? data.handle.charAt(0).toUpperCase() : '?'}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontWeight: '700', fontSize: '14px', color: 'white' }}>@{data.handle || 'unknown'}</span>
-            <span style={{ fontSize: '11px', color: 'var(--si-muted)', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--war-yellow)', display: 'inline-block' }}></span>
-              {data.niche || 'General'}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--war-cyan)' }}>{data.followers || '0'}</span>
-          <span style={{ fontSize: '10px', color: 'var(--si-muted)', fontFamily: 'var(--font-mono)' }}>ENG: {data.engagement || '0%'}</span>
+      <div className="p-5 flex flex-col gap-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="animate-pulse bg-white/[0.03] border border-[#2A2A2A] rounded-xl"
+            style={{ height: i === 1 ? 80 : i === 2 ? 60 : 120 }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center flex-1 min-h-[400px] text-center px-6 opacity-60">
+        <div className="text-4xl mb-4">📭</div>
+        <div className="font-mono text-[13px] font-bold text-brand-yellow tracking-wide uppercase">
+          No Intel Yet — Run a Scout Mission
         </div>
       </div>
     );
-  };
-
-  const renderAdCopy = (item: PaperclipItemData) => (
-    <div key={item.id} style={{
-      padding: '16px',
-      border: '1px solid var(--war-pink)',
-      background: 'rgba(255, 0, 128, 0.05)',
-      borderRadius: '8px',
-      boxShadow: '0 0 15px rgba(255, 0, 128, 0.1) inset',
-      marginBottom: '16px'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '14px' }}>📝</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--war-pink)', fontWeight: '700' }}>AD COPY DRAFT</span>
-        <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--si-muted)', fontFamily: 'var(--font-mono)' }}>
-          {formatDate(item.created_at)}
-        </span>
-      </div>
-      <div style={{ 
-        background: 'rgba(0,0,0,0.3)', 
-        border: '1px solid var(--war-gray-700)', 
-        padding: '12px', 
-        borderRadius: '6px',
-        fontSize: '13px', 
-        color: '#e2e8f0', 
-        lineHeight: 1.5,
-        marginBottom: '16px',
-        whiteSpace: 'pre-wrap'
-      }}>
-        {item.content.draft || JSON.stringify(item.content)}
-      </div>
-      <button 
-        disabled
-        style={{
-          width: '100%',
-          padding: '8px',
-          background: 'var(--war-gray-700)',
-          color: 'var(--si-muted)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '4px',
-          fontFamily: 'var(--font-mono)',
-          fontWeight: '700',
-          fontSize: '12px',
-          cursor: 'not-allowed',
-          letterSpacing: '1px'
-        }}
-      >
-        DEPLOY ASSET (LOCKED)
-      </button>
-    </div>
-  );
+  }
 
   return (
-    <div style={{ padding: '20px', flex: 1, backgroundColor: 'var(--war-black)', minHeight: '100%' }}>
-      <div className="section-title" style={{ fontSize: '24px', marginBottom: '24px', color: 'var(--war-cyan)' }}>
-        INTELLIGENCE FEED
-      </div>
+    <div className="p-5 flex-1 bg-brand-bg min-h-full">
+      <h2 className="font-display text-2xl font-extrabold text-brand-yellow mb-6 uppercase tracking-tight">
+        Intelligence Feed
+      </h2>
 
-      {loading ? (
-        renderSkeleton()
-      ) : items.length === 0 ? (
-        renderEmptyState()
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {items.map(item => {
-            switch (item.item_type) {
-              case 'mission_log': return renderMissionLog(item);
-              case 'pinned_profile': return renderPinnedProfile(item);
-              case 'ad_copy': return renderAdCopy(item);
-              default: 
-                return (
-                  <div key={item.id} style={{ padding: '12px', border: '1px solid var(--war-gray-700)', marginBottom: '12px', borderRadius: '4px' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--si-muted)' }}>{item.item_type}</span>
+      <div className="flex flex-col gap-4">
+        {items.map((item) => {
+          switch (item.item_type) {
+            case 'mission_log':
+              return (
+                <div
+                  key={item.id}
+                  className="p-4 bg-brand-card border border-[#2A2A2A] rounded-2xl border-l-4 border-l-brand-yellow"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base">📡</span>
+                    <span className="font-mono text-[11px] text-brand-yellow font-bold uppercase tracking-wider">
+                      Mission Log
+                    </span>
+                    <span className="ml-auto font-mono text-[10px] text-white/40">
+                      {formatDate(item.created_at)}
+                    </span>
                   </div>
-                );
+                  <p className="text-[13px] text-brand-white leading-relaxed">
+                    {item.content.report || JSON.stringify(item.content)}
+                  </p>
+                  {item.content.tags && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {item.content.tags.map((tag: string, i: number) => (
+                        <span
+                          key={tag}
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${chipColor(i)}`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+
+            case 'pinned_profile': {
+              const profileData: ContactProfileData = {
+                handle: item.content.handle,
+                display_name: item.content.display_name,
+                bio: item.content.bio,
+                avatar_url: item.content.avatar_url,
+                niche: item.content.niche,
+                followers: item.content.followers,
+                engagement_pct: item.content.engagement,
+                platforms: item.content.platforms,
+                contact_email: item.content.contact_email,
+                manager_name: item.content.manager_name,
+                rate_card_range: item.content.rate_card_range,
+                recent_content_thumbnails: item.content.recent_content_thumbnails,
+              };
+              return <ContactDetailCard key={item.id} data={profileData} />;
             }
-          })}
-        </div>
-      )}
+
+            case 'ad_copy':
+              return (
+                <div
+                  key={item.id}
+                  className="p-4 bg-brand-card border border-[#2A2A2A] rounded-2xl border-l-4 border-l-brand-pink"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm">📝</span>
+                    <span className="font-mono text-[11px] text-brand-pink font-bold uppercase tracking-wider">
+                      Ad Copy Draft
+                    </span>
+                    <span className="ml-auto font-mono text-[10px] text-white/40">
+                      {formatDate(item.created_at)}
+                    </span>
+                  </div>
+
+                  <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-3 mb-4">
+                    <pre className="text-[13px] text-brand-white leading-relaxed whitespace-pre-wrap font-body">
+                      {item.content.draft || JSON.stringify(item.content)}
+                    </pre>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleCopy(item.content.draft || '', item.id)}
+                      className={`flex-1 py-2 rounded-full font-mono text-xs font-bold uppercase tracking-wider border transition-all ${
+                        copiedId === item.id
+                          ? 'bg-brand-green text-brand-black border-brand-green'
+                          : 'bg-transparent text-brand-pink border-brand-pink hover:bg-brand-pink/10'
+                      }`}
+                    >
+                      {copiedId === item.id ? 'Copied' : 'Copy'}
+                    </button>
+                    <button
+                      onClick={() => console.log('DEPLOY', item.content)}
+                      className="flex-1 py-2 bg-brand-green text-brand-black font-display font-bold text-xs uppercase tracking-wider rounded-full hover:brightness-110 transition-all"
+                    >
+                      Deploy Asset
+                    </button>
+                  </div>
+                </div>
+              );
+
+            default:
+              return (
+                <div
+                  key={item.id}
+                  className="p-3 bg-brand-card border border-[#2A2A2A] rounded-xl"
+                >
+                  <span className="font-mono text-[10px] text-white/40 uppercase">{item.item_type}</span>
+                  <p className="text-[12px] text-white/70 mt-1 font-mono">{JSON.stringify(item.content)}</p>
+                </div>
+              );
+          }
+        })}
+      </div>
     </div>
   );
 }

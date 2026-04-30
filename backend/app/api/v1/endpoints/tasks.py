@@ -1,43 +1,44 @@
+"""
+Tasks API — brand campaign tasks that influencers claim, submit, and get paid for.
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import uuid
 
-from ... import deps
+from ...deps import get_db, get_current_user, get_current_brand
 from ....models import User, Task, UserTask
+from ....tasks import agent_learning_task
 
 router = APIRouter()
 
 
+class TaskCreate(BaseModel):
+    title: str
+    description: str = ""
+    niche: str = ""
+    reward_amount: float = 0.0
+    max_claims: int = 10
+
+
 class TaskOut(BaseModel):
     id: str
-    title: Optional[str]
-    description: Optional[str]
-    niche: Optional[str]
+    title: str
+    description: str
+    niche: str
     reward_amount: float
     status: str
+    max_claims: int
     deadline: Optional[str]
 
     model_config = {"from_attributes": True}
 
 
-class UserTaskOut(BaseModel):
-    id: str
-    task_id: str
-    task_title: Optional[str]
-    status: str
-    earnings: float
-    submission_url: Optional[str]
-    created_at: Optional[str]
-
-    model_config = {"from_attributes": True}
-
-
-@router.get("/", response_model=list[TaskOut])
+@router.get("/", response_model=List[TaskOut])
 def list_tasks(
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Return all open tasks available to claim."""
     tasks = db.query(Task).filter(Task.status == "open").order_by(Task.created_at.desc()).all()
@@ -49,17 +50,48 @@ def list_tasks(
             niche=t.niche or "",
             reward_amount=float(t.reward_amount or 0),
             status=t.status or "open",
+            max_claims=t.max_claims or 10,
             deadline=t.deadline.isoformat() if t.deadline else None,
         )
         for t in tasks
     ]
 
 
+@router.post("/", response_model=TaskOut, status_code=201)
+def create_task(
+    payload: TaskCreate,
+    current_user: User = Depends(get_current_brand),
+    db: Session = Depends(get_db),
+):
+    """Brand creates a new campaign task."""
+    task = Task(
+        brand_id=current_user.id,
+        title=payload.title,
+        description=payload.description,
+        niche=payload.niche,
+        reward_amount=payload.reward_amount,
+        max_claims=payload.max_claims,
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return TaskOut(
+        id=str(task.id),
+        title=task.title,
+        description=task.description or "",
+        niche=task.niche or "",
+        reward_amount=float(task.reward_amount or 0),
+        status=task.status,
+        max_claims=task.max_claims or 10,
+        deadline=None,
+    )
+
+
 @router.post("/{task_id}/claim", status_code=201)
 def claim_task(
     task_id: str,
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Claim an open task — creates a pending UserTask submission."""
     try:
@@ -83,7 +115,6 @@ def claim_task(
         user_id=current_user.id,
         task_id=tid,
         status="pending",
-        submission_url="",
         earnings=task.reward_amount,
     )
     db.add(user_task)
@@ -94,10 +125,10 @@ def claim_task(
 
 @router.get("/me/submissions")
 def my_submissions(
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    """Return the user's active task submissions with their task details."""
+    """Return the user's task submissions with details."""
     user_tasks = (
         db.query(UserTask)
         .filter(UserTask.user_id == current_user.id)
@@ -126,14 +157,10 @@ def my_submissions(
 def approve_submission(
     task_id: str,
     submission_id: str,
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_brand),
+    db: Session = Depends(get_db),
 ):
-    """
-    Approve a UserTask submission (brand only).
-    Triggers agent_learning_task to embed the content into agent memories.
-    """
-    from ....tasks import agent_learning_task
+    """Brand approves a UserTask submission — triggers agent learning."""
     from datetime import datetime, timezone
 
     ut = db.query(UserTask).filter(UserTask.id == submission_id).first()
@@ -148,7 +175,7 @@ def approve_submission(
     ut.approved_at = datetime.now(timezone.utc)
     db.commit()
 
-    # Kick off learning async — if agent was used
+    # Kick off learning async if agent was used
     if ut.agent_id and ut.submission_url:
         agent_learning_task.delay(
             str(ut.agent_id),

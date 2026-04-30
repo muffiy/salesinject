@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+"""
+Agents API — CRUD for user-owned AI agents (Scout, Matchmaker, Content Gen).
+"""
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, constr
-from typing import Optional
+from typing import Optional, List
 import uuid
 
-from ... import deps
+from ...deps import get_db, get_current_user
 from ....models import User, Agent
 
 router = APIRouter()
@@ -15,38 +18,28 @@ router = APIRouter()
 class AgentCreate(BaseModel):
     name: constr(min_length=1, max_length=100, strip_whitespace=True)
     niche: constr(min_length=1, max_length=100, strip_whitespace=True)
+    agent_type: str = "scout"  # scout, matchmaker, content_gen
 
 
 class AgentOut(BaseModel):
     id: str
-    name: Optional[str]
-    niche: Optional[str]
+    name: str
+    niche: str
+    agent_type: str
     performance_score: float
     tasks_completed: int
     total_earnings: float
+    is_active: bool
 
     model_config = {"from_attributes": True}
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def _agent_to_out(agent: Agent) -> AgentOut:
-    return AgentOut(
-        id=str(agent.id),
-        name=agent.name or "",
-        niche=agent.niche or "",
-        performance_score=float(agent.performance_score or 0),
-        tasks_completed=int(agent.tasks_completed or 0),
-        total_earnings=float(agent.total_earnings or 0),
-    )
-
-
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-@router.get("/", response_model=list[AgentOut])
+@router.get("/", response_model=List[AgentOut])
 def list_agents(
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Return all agents owned by the current user."""
     agents = db.query(Agent).filter(Agent.user_id == current_user.id).all()
@@ -56,15 +49,16 @@ def list_agents(
 @router.post("/", response_model=AgentOut, status_code=201)
 def create_agent(
     payload: AgentCreate,
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    """Create a new agent for the current user."""
+    """Create a new AI agent for the current user."""
     agent = Agent(
         user_id=current_user.id,
         name=payload.name,
         niche=payload.niche,
-        configuration={},  # default empty config; extended in Phase 5
+        agent_type=payload.agent_type,
+        configuration={},
     )
     db.add(agent)
     db.commit()
@@ -75,8 +69,8 @@ def create_agent(
 @router.delete("/{agent_id}", status_code=204)
 def delete_agent(
     agent_id: str,
-    current_user: User = Depends(deps.get_current_user),
-    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Delete an agent — only the owner may do this."""
     try:
@@ -93,3 +87,18 @@ def delete_agent(
     db.delete(agent)
     db.commit()
     return None
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _agent_to_out(agent: Agent) -> AgentOut:
+    return AgentOut(
+        id=str(agent.id),
+        name=agent.name or "",
+        niche=agent.niche or "",
+        agent_type=agent.agent_type or "scout",
+        performance_score=float(agent.performance_score or 0),
+        tasks_completed=int(agent.tasks_completed or 0),
+        total_earnings=float(agent.total_earnings or 0),
+        is_active=agent.is_active if agent.is_active is not None else True,
+    )

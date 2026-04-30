@@ -1,4 +1,3 @@
-import React from 'react';
 
 // The TikTok/IG shareable component designed in Gen-Z design system
 interface StoryCardProps {

@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import LanguageDetector from 'i18next-browser-languagedetector/cjs';
 
 // English is always needed as fallback — bundle it eagerly.
 import enTranslation from '../locales/en.json';
