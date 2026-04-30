@@ -66,12 +66,12 @@ services:
         condition: service_completed_successfully
     networks:
       - salesinject-internal
-    # 3 workers: tuned for 3.8GB Hostinger KVM
-    command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker --workers 3 --bind 0.0.0.0:8000 --timeout 120 --log-level info
+    # 2 workers: tuned for 2GB RAM VPS (Hostinger KVM 1)
+    command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:8000 --timeout 120 --log-level info
     deploy:
       resources:
         limits:
-          memory: 800M
+          memory: 500M
 
   # ── Celery worker (concurrency 2 for 2GB RAM) ───────────────────────────────
   celery-worker:
@@ -88,7 +88,7 @@ services:
         condition: service_healthy
     networks:
       - salesinject-internal
-    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=3
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2
     deploy:
       resources:
         limits:
