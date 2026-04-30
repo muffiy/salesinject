@@ -121,7 +121,6 @@ def run_agent_task(self, user_id: str, payload: dict) -> dict:
     try:
         with httpx.Client(timeout=30.0) as client:
             resp = client.post(
-                f"{settings.OPENCLAW_URL}/generate",
                 json={"prompt": prompt, "user_id": user_id},
             )
             resp.raise_for_status()

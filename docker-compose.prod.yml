@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
-  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  # ── PostgreSQL (with pgvector) ──────────────────────────────────────────────
   db:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: salesinject-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

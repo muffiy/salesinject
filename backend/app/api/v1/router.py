@@ -1,3 +1,5 @@
+from fastapi import APIRouter
+
 from .endpoints import agents, auth, telegram, users, tasks, scout, health
 
 api_router = APIRouter()

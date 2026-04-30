@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//root/.claude/**)",
+      "Bash(npx tsc *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npm install *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(bash *)",
+      "Bash(docker compose *)",
+      "Bash(curl -sf http://localhost/health)",
+      "Bash(curl -sf http://localhost)",
+      "Bash(curl -sf ifconfig.me)",
+      "Bash(curl -sf http://localhost/api/v1/health/)",
+      "Bash(curl -sf http://2a02:4780:7:7783::1/)",
+      "Bash(curl -sv http://localhost/api/v1/health/)",
+      "Bash(npm run *)",
+      "Bash(docker system *)"
+    ]
+  }
+}
