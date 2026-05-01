@@ -13,6 +13,7 @@ from app.core.database import SessionLocal
 def run_scout_mission(self, niche: str, location: str, user_id: str, chat_id: int = None):
     """Full scout mission pipeline — Exa search → LLM analysis → save → notify."""
     from app.services.paperclip_agent import run_scout_mission as execute_mission
+    from app.core.redis import redis_client
 
     db = SessionLocal()
     try:
@@ -28,6 +29,9 @@ def run_scout_mission(self, niche: str, location: str, user_id: str, chat_id: in
         db.rollback()
         raise self.retry(exc=e)
     finally:
+        # Always release the lock so the user can scout again
+        lock_key = f"scout_lock:{user_id}"
+        redis_client.delete(lock_key)
         db.close()
 
 
