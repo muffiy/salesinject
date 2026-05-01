@@ -1,43 +1,61 @@
-import React, { createContext, useContext, useRef, useCallback, ReactNode } from 'react';
-import { api } from '../services/api';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { authenticateWithTelegram } from '../services/api';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface AuthContextValue {
-  getToken: () => string | null;
-  setToken: (token: string) => void;
-  clearToken: () => void;
+interface AuthContextType {
+  isAuthenticated: boolean;
+  token: string | null;
+  user: any;
+  loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  token: null,
+  user: null,
+  loading: true,
+});
 
-// ── Provider ──────────────────────────────────────────────────────────────────
-export function AuthProvider({ children }: { children: ReactNode }) {
-  // Token lives in a ref — survives re-renders, never touches localStorage.
-  const tokenRef = useRef<string | null>(null);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const getToken = useCallback(() => tokenRef.current, []);
+  // Fallback direct access if hook is missing/not robust
+  const getInitData = () => {
+    return (window as any).Telegram?.WebApp?.initData || '';
+  };
 
-  const setToken = useCallback((token: string) => {
-    tokenRef.current = token;
-    // Inject into every future axios request immediately
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }, []);
-
-  const clearToken = useCallback(() => {
-    tokenRef.current = null;
-    delete api.defaults.headers.common['Authorization'];
+  useEffect(() => {
+    const login = async () => {
+      try {
+        const initDataRaw = getInitData();
+        if (initDataRaw) {
+          const data = await authenticateWithTelegram(initDataRaw);
+          setToken(data.access_token);
+          setUser(data.user);
+          localStorage.setItem('token', data.access_token);
+        } else {
+            // For local browser testing
+            const data = await authenticateWithTelegram("mock_data=123");
+            setToken(data.access_token);
+            setUser(data.user);
+            localStorage.setItem('token', data.access_token);
+        }
+      } catch (error) {
+        console.error('Auth error', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    login();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ getToken, setToken, clearToken }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!token, token, user, loading }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
-  return ctx;
-}
+export const useAuth = () => useContext(AuthContext);

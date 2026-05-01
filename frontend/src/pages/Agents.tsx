@@ -117,7 +117,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     if (!name.trim() || !niche.trim()) { setErr('Both fields are required.'); return; }
     setLoading(true); setErr('');
     try {
-      await createAgent(name.trim(), niche.trim());
+      await createAgent({ name: name.trim(), niche: niche.trim() });
       onCreated();
       onClose();
     } catch {
@@ -167,7 +167,7 @@ function TrainModal({ agent, onClose }: { agent: Agent; onClose: () => void }) {
     setLoading(true); setErr(''); setStatusText('Queuing task…');
     try {
       // Step 1: Dispatch to Celery — get task_id (202 Accepted)
-      const { task_id } = await runAgentTask(agent.id, agent.niche, productName.trim());
+      const { task_id } = await runAgentTask({ agent_id: agent.id, niche: agent.niche, directive: productName.trim() });
       setStatusText('Agent is working… ⏳');
       // Step 2: Poll until done (2s interval, 2 min timeout)
       const data = await pollUntilDone(task_id);

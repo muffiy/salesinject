@@ -1,11 +1,27 @@
+# Node
 node_modules/
-venv/
-__pycache__/
-*.pyc
-.env
-.env.local
-.env.*.local
 dist/
 build/
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.env
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-.agents/
+Thumbs.db
+
+# Docker
+docker-compose.override.yml

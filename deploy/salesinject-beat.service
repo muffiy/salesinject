@@ -1,0 +1,16 @@
+[Unit]
+Description=SalesInject Celery Beat scheduler
+After=network.target redis-server.service
+
+[Service]
+User=salesinject
+Group=salesinject
+WorkingDirectory=/opt/salesinject
+EnvironmentFile=/opt/salesinject/.env
+ExecStart=/opt/salesinject/.venv/bin/celery -A app.worker.celery_app beat -l info
+Restart=on-failure
+RestartSec=10
+TimeoutSec=120
+
+[Install]
+WantedBy=multi-user.target

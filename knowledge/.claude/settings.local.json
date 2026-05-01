@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -fsSL https://openrouter.ai/labs/spawn/cli/install.sh)",
+      "Bash(bash)",
+      "WebSearch",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh)",
+      "PowerShell(irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1 | iex)",
+      "PowerShell(& \"C:\\\\Users\\\\ASUS\\\\AppData\\\\Local\\\\hermes\\\\hermes-agent\\\\venv\\\\Scripts\\\\hermes.exe\" --help)",
+      "PowerShell(hermes *)",
+      "Skill(update-config)"
+    ]
+  }
+}

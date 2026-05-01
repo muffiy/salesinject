@@ -1,234 +1,211 @@
 """
-Paperclip Tool-Use Layer — Scout Mission Pipeline
+Paperclip Tools — @tool-decorated functions for the AI agent pipeline.
 
-These @tool-decorated functions are the callable building blocks
-that a future LLM agent orchestrator (Agent Zero, LangChain, etc.)
-can invoke by name. Each tool is independently executable and
-maps cleanly to one service in the backend.
-
-Tool call flow:
-    scout_influencers() → analyze_and_rank() → save_scout_results()
+Each tool is registered in _TOOL_REGISTRY for introspection.
+Tools are called sequentially by the scout mission orchestrator (paperclip_agent.py).
 """
+import uuid
+import json
+import random
+from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session
 
-from functools import wraps
-from typing import Any, Callable, List, Dict
-
-
-# ---------------------------------------------------------------------------
-# Minimal @tool decorator
-# Stores tool metadata on the function for future orchestrator discovery.
-# Compatible with a future swap to LangChain's @tool or Agent Zero's registry.
-# ---------------------------------------------------------------------------
-
-_TOOL_REGISTRY: Dict[str, Callable] = {}
+# ── Tool Registry ──────────────────────────────────────────────────────────────
+_TOOL_REGISTRY: Dict[str, callable] = {}
 
 
-def tool(func: Callable) -> Callable:
-    """
-    Lightweight @tool decorator.
-    Registers the function in the global tool registry and
-    exposes its name and docstring as metadata attributes.
-    """
-    func.is_tool = True  # type: ignore[attr-defined]
-    func.tool_name = func.__name__  # type: ignore[attr-defined]
-    func.tool_description = (func.__doc__ or "").strip()  # type: ignore[attr-defined]
+def tool(func):
+    """Decorator that registers a function as a tool."""
+    func.is_tool = True
+    func.tool_name = func.__name__
+    func.tool_description = func.__doc__
     _TOOL_REGISTRY[func.__name__] = func
-
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        return func(*args, **kwargs)
-
-    return wrapper  # type: ignore[return-value]
+    return func
 
 
-def get_tool(name: str) -> Callable:
-    """Look up a registered tool by name. Useful for dynamic orchestration."""
-    if name not in _TOOL_REGISTRY:
-        raise KeyError(f"Tool '{name}' is not registered. Available: {list(_TOOL_REGISTRY)}")
-    return _TOOL_REGISTRY[name]
+def get_all_tools() -> Dict[str, callable]:
+    return _TOOL_REGISTRY.copy()
 
 
-# ---------------------------------------------------------------------------
-# Tool 1: Scout Influencers
-# ---------------------------------------------------------------------------
+# ── Tool Implementations ──────────────────────────────────────────────────────
 
 @tool
-def scout_influencers(niche: str, location: str) -> List[Dict]:
-    """
-    Search for high-value influencers in a given niche and location.
-
-    Calls exa_service.find_influencers() which hits the Exa Neural Search API
-    and returns a structured list. Falls back to mock data gracefully if the
-    API key is not configured.
-
-    Args:
-        niche:    Target content category (e.g. "Fashion", "SaaS", "Food").
-        location: Geographic scope (e.g. "Tunisia", "MENA", "Cairo").
-
-    Returns:
-        List of influencer dicts:
-        [{ name, handle, followers, engagement, location }, ...]
-    """
+def scout_influencers(niche: str, location: str) -> List[Dict[str, Any]]:
+    """Find influencers using Exa.ai neural search or mock data."""
     from ..services.exa_service import find_influencers
-    return find_influencers(niche=niche, location=location)
+    return find_influencers(niche, location)
 
-
-# ---------------------------------------------------------------------------
-# Tool 2: Analyze and Rank
-# ---------------------------------------------------------------------------
 
 @tool
-def analyze_and_rank(influencers_data: List[Dict], niche: str) -> str:
-    """
-    Run Agent Zero analysis on a list of influencer profiles.
+def analyze_and_rank(influencers_data: List[Dict[str, Any]], niche: str) -> str:
+    """Uses OpenRouter LLM to analyze and rank influencers by niche fit."""
+    from ..services.openrouter_service import call_llm
 
-    Produces a ranked plain-text report of the top 3 targets,
-    sorted by follower count. The stub is deterministic; swap
-    the underlying function with an LLM call when ready.
+    if not influencers_data:
+        return f"No influencers found for niche: {niche}"
 
-    Args:
-        influencers_data: Output from scout_influencers().
-        niche:            The niche context for report framing.
+    # Sort by followers first as baseline
+    ranked = sorted(influencers_data, key=lambda x: x.get("followers", 0), reverse=True)[:10]
 
-    Returns:
-        A formatted multi-line ranking report string.
-    """
-    from ..services.agent_zero_service import analyze_influencers
-    return analyze_influencers(influencers_data=influencers_data, niche=niche)
+    prompt = (
+        f"You are an expert Influencer Marketing Agent. Analyze these influencer profiles "
+        f"in the '{niche}' niche and provide a concise, ranked report of the top 3 best fits "
+        f"for a brand campaign. For each, explain WHY they are a good fit.\n\n"
+        f"Influencer Data:\n{json.dumps(ranked, indent=2)}"
+    )
+
+    return call_llm(prompt)
 
 
-# ---------------------------------------------------------------------------
-# Tool 3: Save Scout Results
-# ---------------------------------------------------------------------------
+@tool
+def save_scout_report(
+    user_id: str,
+    influencers: List[Dict[str, Any]],
+    niche: str,
+    db: Session,
+) -> Dict[str, Any]:
+    """Persist scout report with map-ready coordinates for DeckGL rendering."""
+    from ..models import ScoutReport
+
+    # Generate map_data with Tunis-area coordinates for each influencer
+    map_data = []
+    for i, inf in enumerate(influencers):
+        lat = inf.get("lat", 36.8065 + random.uniform(-0.05, 0.05))
+        lon = inf.get("lon", 10.1815 + random.uniform(-0.05, 0.05))
+        map_data.append({
+            "name": inf.get("name") or inf.get("handle", f"Creator_{i}"),
+            "handle": inf.get("handle", ""),
+            "followers": inf.get("followers", 0),
+            "engagement": inf.get("engagement", 0),
+            "niche": niche,
+            "coordinates": [lon, lat],
+            "type": "influencer",
+        })
+
+    report = ScoutReport(
+        user_id=user_id,
+        target_niche=niche,
+        target_location=influencers[0].get("location", "Tunisia") if influencers else "Tunisia",
+        map_data=map_data,
+        influencer_count=len(influencers),
+    )
+    db.add(report)
+    db.flush()
+
+    return {"record_id": str(report.id), "map_points": len(map_data)}
+
 
 @tool
 def save_scout_results(
     user_id: str,
-    task_id: str,
-    influencers: List[Dict],
+    task_id: Optional[str],
+    influencers: List[Dict[str, Any]],
     report: str,
     ad_copy: str,
-    db: Any,
-) -> Dict:
-    """
-    Persist a completed scout mission to the Paperclip database layer.
+    db: Session,
+) -> Dict[str, Any]:
+    """Store mission results as PaperclipItems (mission_log, pinned_profiles, ad_copy)."""
+    from ..models import PaperclipItem
 
-    Writes 3 types of rows into `paperclip_items`:
-    - 1 × mission_log   (the full Agent Zero report string)
-    - N × pinned_profile (one row per influencer found)
-    - 1 × ad_copy        (an initial draft string for brand outreach)
+    rows = 0
 
-    The `db` session is passed in from the Celery task to ensure
-    all writes share the same SQLAlchemy transaction context.
-
-    Args:
-        user_id:     UUID string of the requesting user.
-        task_id:     UUID string of the parent Celery task (or None).
-        influencers: List of influencer dict from scout_influencers().
-        report:      Ranked report string from analyze_and_rank().
-        ad_copy:     Draft ad copy string (may be pre-generated or a stub).
-        db:          Active SQLAlchemy Session from the caller.
-
-    Returns:
-        {"status": "ok", "rows_written": N}
-    """
-    from ..services.paperclip_service import write_paperclip_items
-
-    write_paperclip_items(
-        db=db,
+    # 1. Mission Log
+    log_item = PaperclipItem(
         user_id=user_id,
         task_id=task_id,
-        influencers=influencers,
-        report=report,
-        ad_copy=ad_copy,
+        item_type="mission_log",
+        content={"report": report},
     )
+    db.add(log_item)
+    rows += 1
 
-    # 1 mission_log + len(influencers) pinned_profiles + 1 ad_copy
-    rows_written = 1 + len(influencers) + 1
-    return {"status": "ok", "rows_written": rows_written}
+    # 2. Pinned Profiles
+    for inf in influencers:
+        profile_item = PaperclipItem(
+            user_id=user_id,
+            task_id=task_id,
+            item_type="pinned_profile",
+            content=inf,
+        )
+        db.add(profile_item)
+        rows += 1
 
-
-# ---------------------------------------------------------------------------
-# Tool 4: Save Scout Report
-# ---------------------------------------------------------------------------
-
-@tool
-def save_scout_report(user_id: str, influencers: List[Dict], niche: str, db: Any) -> Dict:
-    """
-    Write a structured scout result into the `scout_reports` table.
-
-    Converts the influencer list produced by scout_influencers() into
-    the map_data JSONB format expected by ScoutReport, then flushes
-    within the caller's transaction (caller is responsible for commit).
-
-    Args:
-        user_id:     UUID string of the requesting user.
-        influencers: Structured list from scout_influencers().
-        niche:       Niche string stored on the report row.
-        db:          Active SQLAlchemy Session shared from Celery task.
-
-    Returns:
-        {"status": "ok", "record_id": str}
-    """
-    from ..models import ScoutReport
-    import uuid
-
-    # Map influencer dicts to the map_data schema used by the frontend DeckGLMap
-    map_data = [
-        {
-            "id": f"inf_{i}",
-            "name": inf.get("name", f"Operative_{i}"),
-            "handle": inf.get("handle", ""),
-            "lat": inf.get("lat", 36.8065 + (i * 0.05)),   # fallback scatter near Tunis
-            "lng": inf.get("lng", 10.1815 + (i * 0.05)),
-            "followers": inf.get("followers", 0),
-            "engagement_rate": inf.get("engagement", 0.0),
-            "niche": niche,
-        }
-        for i, inf in enumerate(influencers)
-    ]
-
-    record_id = uuid.uuid4()
-    report = ScoutReport(
-        id=record_id,
+    # 3. Ad Copy Draft
+    copy_item = PaperclipItem(
         user_id=user_id,
-        target_niche=niche,
-        map_data=map_data,
+        task_id=task_id,
+        item_type="ad_copy",
+        content={"draft": ad_copy},
     )
-    db.add(report)
-    db.flush()  # caller commits
-    return {"status": "ok", "record_id": str(record_id)}
+    db.add(copy_item)
+    rows += 1
 
+    db.flush()
+    return {"rows_written": rows}
 
-# ---------------------------------------------------------------------------
-# Tool 5: Notify Telegram
-# ---------------------------------------------------------------------------
 
 @tool
-def notify_telegram(chat_id: int, message: str) -> Dict:
-    """
-    Send a Telegram message to a specific chat_id.
+def generate_ad_idea_tool(user_id: str, prompt: str, db: Session = None) -> Dict[str, Any]:
+    """RAG-augmented content generation: fetch context from memories, call LLM, store result."""
+    from ..services.openrouter_service import call_llm
+    from ..models import PaperclipItem, AgentMemory
 
-    Wraps the async telegram_service.send_message() in asyncio.run()
-    so it can be called synchronously from a Celery worker without
-    requiring an event loop to already be running.
+    # RAG: Fetch recent context if DB available
+    context_snippets = []
+    if db:
+        memories = (
+            db.query(AgentMemory)
+            .filter(AgentMemory.user_id == user_id)
+            .order_by(AgentMemory.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        context_snippets = [m.content for m in memories if m.content]
 
-    Fails silently — a notification error must never crash a Celery task.
+        recent_copies = (
+            db.query(PaperclipItem)
+            .filter(PaperclipItem.user_id == user_id, PaperclipItem.item_type == "ad_copy")
+            .order_by(PaperclipItem.created_at.desc())
+            .limit(3)
+            .all()
+        )
+        for item in recent_copies:
+            if isinstance(item.content, dict):
+                context_snippets.append(item.content.get("draft", ""))
 
-    Args:
-        chat_id: Telegram chat ID of the target user.
-        message: Plain-text message string to send.
+    context_block = "\n".join(context_snippets) if context_snippets else "No prior context."
 
-    Returns:
-        {"status": "sent"} on success, {"status": "failed", "error": ...} on failure.
-    """
+    full_prompt = (
+        f"Generate creative marketing content based on this request:\n\n"
+        f"Request: {prompt}\n\n"
+        f"Context from previous work:\n{context_block}\n\n"
+        f"Provide:\n1. A viral hook (max 15 words)\n2. A 60-second video script\n"
+        f"3. Three caption options with hashtags\n4. Best posting time for Tunisia"
+    )
+
+    result = call_llm(full_prompt)
+
+    # Store the result
+    if db:
+        item = PaperclipItem(
+            user_id=user_id,
+            item_type="content_idea",
+            content={"prompt": prompt, "result": result},
+        )
+        db.add(item)
+        db.flush()
+
+    return {"content": result}
+
+
+@tool
+def notify_telegram(chat_id: int, message: str) -> Dict[str, str]:
+    """Send a Telegram notification — fails silently to not break the pipeline."""
     import asyncio
-    from ..services.telegram_service import send_message
-
     try:
-        asyncio.run(send_message(chat_id=chat_id, text=message))
+        from ..services.telegram_service import send_message
+        asyncio.run(send_message(chat_id, message))
         return {"status": "sent"}
-    except Exception as exc:
-        # Log but never propagate — Telegram outage must not fail the mission
-        print(f"[notify_telegram] Failed to notify chat_id={chat_id}: {exc}")
-        return {"status": "failed", "error": str(exc)}
+    except Exception as e:
+        print(f"[Telegram Notify] Failed: {e}")
+        return {"status": "failed", "error": str(e)}
