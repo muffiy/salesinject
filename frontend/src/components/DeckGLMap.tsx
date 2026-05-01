@@ -42,7 +42,6 @@ export default function DeckGLMap({ data }: { data: any[] }) {
     >
       <Map
         mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-        mapStyleOptions={{}}
       />
     </DeckGL>
   );

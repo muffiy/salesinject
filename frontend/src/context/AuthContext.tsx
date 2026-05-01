@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useInitData } from '@telegram-apps/sdk-react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { authenticateWithTelegram } from '../services/api';
 
 interface AuthContextType {
@@ -20,13 +20,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const initData = useInitData();
+
+  // Fallback direct access if hook is missing/not robust
+  const getInitData = () => {
+    return (window as any).Telegram?.WebApp?.initData || '';
+  };
 
   useEffect(() => {
     const login = async () => {
       try {
-        if (initData && initData.raw) {
-          const data = await authenticateWithTelegram(initData.raw);
+        const initDataRaw = getInitData();
+        if (initDataRaw) {
+          const data = await authenticateWithTelegram(initDataRaw);
           setToken(data.access_token);
           setUser(data.user);
           localStorage.setItem('token', data.access_token);
@@ -44,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
     login();
-  }, [initData]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated: !!token, token, user, loading }}>

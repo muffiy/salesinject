@@ -46,4 +46,64 @@ export const getMe = async () => {
   return response.data;
 };
 
+export const getAgents = async () => {
+  const response = await api.get('/agents/');
+  return response.data;
+};
+
+export const createAgent = async (data: { name: string; niche: string; agent_type?: string }) => {
+  const response = await api.post('/agents/', data);
+  return response.data;
+};
+
+export const deleteAgent = async (agentId: string) => {
+  const response = await api.delete(`/agents/${agentId}`);
+  return response.data;
+};
+
+export const runAgentTask = async (data: any) => {
+  const response = await api.post('/agent/task', data);
+  return response.data;
+};
+
+export const pollUntilDone = async (taskId: string, intervalMs = 2000): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const timer = setInterval(async () => {
+      try {
+        const response = await api.get(`/agent/task/${taskId}/status`);
+        if (response.data.state === 'SUCCESS') {
+          clearInterval(timer);
+          resolve(response.data);
+        } else if (response.data.state === 'FAILURE') {
+          clearInterval(timer);
+          reject(new Error(response.data.error || 'Task failed'));
+        }
+      } catch (err) {
+        clearInterval(timer);
+        reject(err);
+      }
+    }, intervalMs);
+  });
+};
+
+export const getPayments = async () => {
+  const response = await api.get('/users/me/payments');
+  return response.data;
+};
+
+export const getTasks = async () => {
+  const response = await api.get('/tasks/');
+  return response.data;
+};
+
+export const claimTask = async (taskId: string) => {
+  const response = await api.post(`/tasks/${taskId}/claim`);
+  return response.data;
+};
+
+export const getMySubmissions = async () => {
+  const response = await api.get('/tasks/me/submissions');
+  return response.data;
+};
+
 export default api;

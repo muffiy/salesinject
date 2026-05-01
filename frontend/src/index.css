@@ -19,7 +19,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--war-black);
   color: white;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 code {
