@@ -112,3 +112,16 @@ def get_leaderboard(
         )
         for e in entries
     ]
+
+
+@router.get("/progress")
+def get_user_progress(current_user: User = Depends(get_current_user)):
+    return {"level": 2, "xp_current": 720, "xp_next": 1000, "next_unlock": "+5 TND bonus per mission"}
+
+@router.get("/reputation")
+def get_user_reputation(current_user: User = Depends(get_current_user)):
+    return {"score": 742, "dailyChange": 32}
+
+@router.get("/leaderboard/city")
+def get_city_leaderboard(city: str = Query("Tunis"), limit: int = Query(10, le=50)):
+    return {"city": city, "entries": [{"rank": i+1, "name": f"Agent-{i+1}", "score": 900 - i*23} for i in range(limit)]}
