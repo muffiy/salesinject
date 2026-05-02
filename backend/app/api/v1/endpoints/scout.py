@@ -1,6 +1,3 @@
-"""
-Scout API — trigger scout missions and retrieve results + paperclip items.
-"""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -10,9 +7,19 @@ import datetime
 from ...deps import get_db, get_current_user
 from ....models import User, ScoutReport, PaperclipItem
 from ....tasks import run_scout_mission, generate_ad_idea
+from ....core.redis import get_redis
+import redis
 
 router = APIRouter()
 
+# Helper function to transform map data
+def transform_map_point(point):
+    # Convert from {'lat': x, 'lng': y} to {'lon': y, 'lat': x, 'type': 'influencer'}
+    return {
+        'lon': point.get('lng', 0),
+        'lat': point.get('lat', 0),
+        'type': 'influencer'
+    }
 
 class ScoutMissionRequest(BaseModel):
     niche: str
@@ -23,12 +30,11 @@ class ScoutReportOut(BaseModel):
     id: str
     target_niche: Optional[str]
     target_location: Optional[str]
-    map_data: List[Any]
+    map_data: List[dict]
     influencer_count: int
     created_at: datetime.datetime
 
     model_config = {"from_attributes": True}
-
 
 class PaperclipItemOut(BaseModel):
     id: str
@@ -37,7 +43,6 @@ class PaperclipItemOut(BaseModel):
     created_at: datetime.datetime
 
     model_config = {"from_attributes": True}
-
 
 class ContentRequest(BaseModel):
     prompt: str
@@ -48,8 +53,19 @@ def launch_scout_mission(
     payload: ScoutMissionRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    r: redis.Redis = Depends(get_redis),
 ):
     """Launch an async scout mission via Celery."""
+    # Prevent duplicate missions using a Redis lock
+    lock_key = f"scout_lock:{current_user.id}"
+    
+    # Try to set the lock with a 5-minute timeout (300 seconds)
+    if not r.set(lock_key, "running", ex=300, nx=True):
+        raise HTTPException(
+            status_code=409, 
+            detail="A scout mission is already in progress. Please wait for it to complete."
+        )
+
     task = run_scout_mission.delay(
         niche=payload.niche,
         location=payload.location,
@@ -79,11 +95,14 @@ def get_latest_scout_report(
     if not report:
         raise HTTPException(status_code=404, detail="No scout reports found.")
 
+    # Transform map data
+    transformed_map_data = [transform_map_point(p) for p in (report.map_data or [])]
+
     return ScoutReportOut(
         id=str(report.id),
         target_niche=report.target_niche or "",
         target_location=report.target_location or "",
-        map_data=report.map_data if report.map_data is not None else [],
+        map_data=transformed_map_data,
         influencer_count=report.influencer_count or 0,
         created_at=report.created_at,
     )
@@ -102,12 +121,13 @@ def get_all_reports(
         .limit(20)
         .all()
     )
+
     return [
         ScoutReportOut(
             id=str(r.id),
             target_niche=r.target_niche or "",
             target_location=r.target_location or "",
-            map_data=r.map_data if r.map_data is not None else [],
+            map_data=[transform_map_point(p) for p in (r.map_data or [])],
             influencer_count=r.influencer_count or 0,
             created_at=r.created_at,
         )
