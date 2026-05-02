@@ -17,3 +17,4 @@ sentence-transformers
 exa_py
 gunicorn
 openai
+kafka-python==2.0.2

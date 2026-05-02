@@ -31,6 +31,30 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Redpanda (Kafka-compatible event bus) ──────────────────────────────────
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.14
+    container_name: salesinject-redpanda
+    command:
+      - redpanda
+      - start
+      - --kafka-addr
+      - internal://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092
+      - --smp
+      - "1"
+      - --memory
+      - "1G"
+      - --overprovisioned
+    networks:
+      - salesinject-internal
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health", "--local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── Run Alembic migrations before backend starts ────────────────────────────
   migrate:
     build:
@@ -73,12 +97,14 @@ services:
         limits:
           memory: 500M
 
-  # ── Celery worker (concurrency 2 for 2GB RAM) ───────────────────────────────
-  celery-worker:
+  # ── Celery workers for Agent OS v2 (domain isolation) ───────────────────────
+
+  # General worker for existing tasks
+  celery-general:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: salesinject-celery
+    container_name: salesinject-celery-general
     restart: unless-stopped
     env_file: ./backend/.env
     depends_on:
@@ -88,11 +114,116 @@ services:
         condition: service_healthy
     networks:
       - salesinject-internal
-    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2 -Q general
     deploy:
       resources:
         limits:
-          memory: 600M
+          memory: 300M
+
+  # Scout domain worker
+  celery-scout:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery-scout
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2 -Q scout
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # Core domain worker (Hermes planning/strategy)
+  celery-core:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery-core
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2 -Q core
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # Ammo domain worker (content generation)
+  celery-ammo:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery-ammo
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2 -Q ammo
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # Bounty domain worker (matching and contracts)
+  celery-bounty:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery-bounty
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=1 -Q bounty
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # Fast domain worker (low-latency operations)
+  celery-fast:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: salesinject-celery-fast
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - salesinject-internal
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=4 -Q fast
+    deploy:
+      resources:
+        limits:
+          memory: 300M
 
   # ── Celery Beat ─────────────────────────────────────────────────────────────
   celery-beat:
