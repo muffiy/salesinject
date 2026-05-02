@@ -52,6 +52,11 @@ This file serves as the central hub for tracking the development progress of the
 - [x] Created deployment cheat sheet (`knowledge/deployment_cheatsheet.md`)
 - [x] Consolidated all knowledge documentation in `.claude/projects` directory
 
+### 7. UI/UX Polish
+- [x] Updated design tokens to match reference palette (acid yellow, terminal green, hot pink, lime)
+- [x] Improved landing page with SplashScreen component based on design references
+- [x] Fixed TypeScript build errors and CSS build issues
+
 ---
 
 ## 🚧 Still genuinely in progress

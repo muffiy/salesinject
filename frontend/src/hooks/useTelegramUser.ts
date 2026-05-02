@@ -23,7 +23,34 @@ export function useTelegramUser() {
   const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
+    let tg = window.Telegram?.WebApp;
+    if (!tg && (import.meta.env.DEV || import.meta.env.VITE_BYPASS_TELEGRAM === 'true')) {
+      // Create a minimal mock Telegram WebApp for development
+      console.log('Dev mode: mocking Telegram WebApp');
+      const mockUser: TelegramUser = {
+        id: 123456789,
+        first_name: 'Dev',
+        last_name: 'User',
+        username: 'dev_user',
+        language_code: 'en',
+        photo_url: '',
+      };
+      const mockWebApp = {
+        ready: () => {},
+        expand: () => {},
+        initDataUnsafe: { user: mockUser },
+        initData: '',
+        colorScheme: 'dark' as const,
+      };
+      // Attach to window for other components
+      if (!window.Telegram) {
+        window.Telegram = { WebApp: mockWebApp };
+      } else {
+        window.Telegram.WebApp = mockWebApp;
+      }
+      tg = mockWebApp;
+    }
+
     if (tg) {
       tg.ready();
       tg.expand();

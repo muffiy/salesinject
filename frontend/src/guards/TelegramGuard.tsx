@@ -8,7 +8,7 @@ export function TelegramGuard() {
     const telegram = (window as any).Telegram;
     if (telegram?.WebApp?.initData) {
       setHasInitData(true);
-    } else if (import.meta.env.DEV) {
+    } else if (import.meta.env.DEV || import.meta.env.VITE_BYPASS_TELEGRAM === 'true') {
       console.log('Dev mode: skipping Telegram initData check');
       setHasInitData(true); // Allow local bypassing
     } else {
@@ -27,7 +27,7 @@ export function TelegramGuard() {
       }}>
         <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--war-pink)', fontSize: '24px', marginBottom: '16px' }}>RESTRICTED ACCESS</h2>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', marginBottom: '24px', color: 'var(--si-muted)' }}>SalesInject Command must be launched via Telegram.</p>
-        <a href="https://t.me/SalesInjectBot" className="btn-primary" style={{ textDecoration: 'none' }}>
+        <a href="https://t.me/salesInspectAI_Bot" className="btn-primary" style={{ textDecoration: 'none' }}>
           <span className="btn-text">OPEN IN TELEGRAM</span>
         </a>
       </div>

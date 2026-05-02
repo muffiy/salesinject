@@ -2,18 +2,18 @@ import type {
   ServerContext,
   SummarizeArticleRequest,
   SummarizeArticleResponse,
-} from '../../../../src/generated/server/worldmonitor/news/v1/service_server';
+} from '../../../../src/generated/server/worldmonitor/news/v1/service_server.js';
 
-import { cachedFetchJsonWithMeta } from '../../../_shared/redis';
+import { cachedFetchJsonWithMeta } from '../../../_shared/redis.js';
 import {
   CACHE_TTL_SECONDS,
   deduplicateHeadlines,
   buildArticlePrompts,
   getProviderCredentials,
   getCacheKey,
-} from './_shared';
-import { CHROME_UA } from '../../../_shared/constants';
-import { isProviderAvailable } from '../../../_shared/llm-health';
+} from './_shared.js';
+import { CHROME_UA } from '../../../_shared/constants.js';
+import { isProviderAvailable } from '../../../_shared/llm-health.js';
 import { sanitizeHeadlinesLight, sanitizeHeadlines, sanitizeForPrompt } from '../../../_shared/llm-sanitize.js';
 
 // ======================================================================
