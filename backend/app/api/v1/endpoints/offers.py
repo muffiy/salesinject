@@ -191,10 +191,15 @@ def complete_offer(
     db: Session = Depends(get_db),
 ):
     """Upload proof and trigger review — marks claim as pending_review."""
+    try:
+        offer_uuid = uuid.UUID(offer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid offer_id format")
+
     claim = (
         db.query(OfferClaim)
         .filter(
-            OfferClaim.offer_id == offer_id,
+            OfferClaim.offer_id == offer_uuid,
             OfferClaim.influencer_id == current_user.id,
             OfferClaim.status.in_(["claimed", "in_progress", "arrived", "submitted"]),
         )
@@ -209,7 +214,10 @@ def complete_offer(
     if claim.status != "arrived":
         raise HTTPException(status_code=400, detail="Must arrive before submitting")
 
-    mark_submitted(db, str(claim.id))
+    try:
+        mark_submitted(db, str(claim.id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     claim.proof_url = proof_url
     db.commit()
 

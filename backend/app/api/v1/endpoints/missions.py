@@ -8,9 +8,17 @@ from ....models import OfferClaim, MissionShare, User
 router = APIRouter()
 
 
+def _parse_uuid(value: str, field: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid {field} format") from exc
+
+
 @router.post('/{claim_id}/boost')
 def boost_mission(claim_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id), OfferClaim.influencer_id == current_user.id).first()
+    claim_uuid = _parse_uuid(claim_id, "claim_id")
+    claim = db.query(OfferClaim).filter(OfferClaim.id == claim_uuid, OfferClaim.influencer_id == current_user.id).first()
     if not claim:
         raise HTTPException(status_code=404, detail='Claim not found')
     if claim.status == 'completed':
@@ -22,7 +30,7 @@ def boost_mission(claim_id: str, db: Session = Depends(get_db), current_user: Us
 
 @router.post('/share/{mission_id}')
 def share_mission(mission_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    mission_uuid = uuid.UUID(mission_id)
+    mission_uuid = _parse_uuid(mission_id, "mission_id")
     existing = db.query(MissionShare).filter(MissionShare.user_id == current_user.id, MissionShare.mission_id == mission_uuid).first()
     if existing:
         return {'missionId': mission_id, 'bonus': 0, 'granted': False}
