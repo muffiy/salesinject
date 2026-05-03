@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+import uuid
 from celery import chain, shared_task
 from sqlalchemy.orm import Session
 
@@ -106,7 +106,8 @@ def task_finalize_mission(self, data: dict):
 def resolve_competition_async(self, offer_id: str):
     db = _db()
     try:
-        claims = db.query(OfferClaim).filter(OfferClaim.offer_id == offer_id, OfferClaim.completed_at.isnot(None)).order_by(OfferClaim.completed_at.asc()).all()
+        offer_uuid = uuid.UUID(offer_id)
+        claims = db.query(OfferClaim).filter(OfferClaim.offer_id == offer_uuid, OfferClaim.completed_at.isnot(None)).order_by(OfferClaim.completed_at.asc()).all()
         for idx, claim in enumerate(claims):
             claim.position = idx + 1
         db.commit()
