@@ -12,7 +12,7 @@ from typing import Optional, List, Any
 from ...deps import get_db, get_current_user, get_current_brand
 from ....models import User, Offer, OfferClaim, OfferPerformance
 from ....tasks import send_offer_alerts, process_payout
-from ....services.mission_service import mark_submitted
+from ....services.mission_service import submit_mission
 
 router = APIRouter()
 
@@ -215,7 +215,7 @@ def complete_offer(
         raise HTTPException(status_code=400, detail="Must arrive before submitting")
 
     try:
-        mark_submitted(db, str(claim.id))
+        submit_mission(db, str(claim.id))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     claim.proof_url = proof_url
