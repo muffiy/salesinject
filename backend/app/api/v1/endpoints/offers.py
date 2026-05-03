@@ -317,6 +317,7 @@ def boost_offer_reward(offer_id: str, db: Session = Depends(get_db)):
         "boostCount": int(offer.boost_count or 0),
     }
 
+
 @router.get("/{offer_id}/competitors")
 def get_offer_competitors(offer_id: str):
     return {"total_claimants": 3, "fastest_completion_estimated": 4, "your_current_distance": 800}

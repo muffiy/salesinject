@@ -23,6 +23,7 @@ class User(Base):
     last_active = Column(DateTime(timezone=True), server_default=func.now())
     onboarded = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    auto_boost = Column(Boolean, default=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     reputation_score = Column(Integer, default=0)
     level = Column(Integer, default=1)

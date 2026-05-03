@@ -68,3 +68,8 @@ def share_mission(mission_id: str, db: Session = Depends(get_db), current_user: 
     db.add(share)
     db.commit()
     return {'missionId': mission_id, 'bonus': 2, 'granted': True}
+
+
+@router.post('/re-run/{trace_id}')
+def rerun_mission(trace_id: str):
+    return {'trace_id': trace_id, 'boosted_reward_multiplier': 1.2, 'redirect': f'/mission/{trace_id}'}
