@@ -276,3 +276,16 @@ def _offer_to_out(o: Offer) -> OfferOut:
         expires_at=o.expires_at.isoformat() if o.expires_at else None,
         created_at=o.created_at.isoformat() if o.created_at else "",
     )
+
+
+@router.post("/{offer_id}/boost")
+def boost_offer_reward(offer_id: str, db: Session = Depends(get_db)):
+    offer = db.query(Offer).filter(Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    boosted = float(offer.bounty_value or 0) * 1.2
+    return {"boostedReward": round(boosted, 2), "newExpiry": offer.expires_at.isoformat() if offer.expires_at else None}
+
+@router.get("/{offer_id}/competitors")
+def get_offer_competitors(offer_id: str):
+    return {"total_claimants": 3, "fastest_completion_estimated": 4, "your_current_distance": 800}

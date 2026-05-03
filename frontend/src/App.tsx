@@ -7,6 +7,7 @@ import LoopEngine from './pages/LoopEngine';
 import SplashScreen from './components/SplashScreen';
 import PermissionGate from './components/PermissionGate';
 import BottomNavigation from './components/BottomNavigation';
+import LiveTicker from './components/LiveTicker';
 import { AuthProvider } from './context/AuthContext';
 
 // Layout component that wraps pages with bottom navigation
@@ -26,11 +27,13 @@ function MainLayout({ children }: { children: React.ReactNode }) {
     <>
       <div style={{
         paddingBottom: hideNavigation ? '0' : '80px',
+        paddingTop: '24px',
         minHeight: '100vh',
         background: 'var(--war-black)',
       }}>
         {children}
       </div>
+      <LiveTicker />
       {!hideNavigation && <BottomNavigation hasActiveMission={hasActiveMission} />}
     </>
   );
