@@ -3,7 +3,7 @@ Offers API — location-based brand offers that influencers claim and complete.
 """
 import uuid
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -195,12 +195,18 @@ def complete_offer(
         .filter(
             OfferClaim.offer_id == offer_id,
             OfferClaim.influencer_id == current_user.id,
-            OfferClaim.status == "claimed",
+            OfferClaim.status.in_(["claimed", "arrived"]),
         )
         .first()
     )
     if not claim:
         raise HTTPException(status_code=404, detail="No active claim found for this offer")
+
+    if claim.status == "pending_review":
+        return {"message": "Proof already submitted", "claim_id": str(claim.id)}
+
+    if claim.status != "arrived":
+        raise HTTPException(status_code=400, detail="Must arrive before submitting")
 
     claim.status = "pending_review"
     claim.proof_url = proof_url
@@ -276,3 +282,32 @@ def _offer_to_out(o: Offer) -> OfferOut:
         expires_at=o.expires_at.isoformat() if o.expires_at else None,
         created_at=o.created_at.isoformat() if o.created_at else "",
     )
+
+
+@router.post("/{offer_id}/boost")
+def boost_offer_reward(offer_id: str, db: Session = Depends(get_db)):
+    offer = db.query(Offer).filter(Offer.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    now = datetime.now(timezone.utc)
+    if int(offer.boost_count or 0) >= 3:
+        raise HTTPException(status_code=400, detail="Max boosts reached")
+    if offer.last_boosted_at and (now - offer.last_boosted_at) < timedelta(seconds=60):
+        raise HTTPException(status_code=429, detail="Boost cooldown active")
+
+    offer.bounty_value = round(float(offer.bounty_value or 0) * 1.2, 2)
+    offer.boost_count = int(offer.boost_count or 0) + 1
+    offer.last_boosted_at = now
+    offer.expires_at = now + timedelta(minutes=30)
+    db.commit()
+
+    return {
+        "boostedReward": float(offer.bounty_value),
+        "newExpiry": offer.expires_at.isoformat() if offer.expires_at else None,
+        "boostCount": int(offer.boost_count or 0),
+    }
+
+@router.get("/{offer_id}/competitors")
+def get_offer_competitors(offer_id: str):
+    return {"total_claimants": 3, "fastest_completion_estimated": 4, "your_current_distance": 800}

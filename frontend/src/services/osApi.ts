@@ -1,4 +1,4 @@
-import { api } from './api';
+import api from './api';
 
 // Types for the OS v2 API
 export interface MissionLaunchRequest {

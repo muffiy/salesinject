@@ -11,7 +11,7 @@ celery_app = Celery(
     "salesinject",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks", "app.agent_os.nodes"],
+    include=["app.tasks", "app.tasks.mission_tasks", "app.agent_os.nodes"],
 )
 
 celery_app.conf.update(
@@ -22,10 +22,19 @@ celery_app.conf.update(
     enable_utc=True,
     # Keep results for 1 hour so the status endpoint can read them
     result_expires=3600,
+    task_acks_late=True,
+    worker_prefetch_multiplier=1,
+    task_time_limit=300,
+    task_soft_time_limit=240,
+    task_default_retry_delay=5,
+    task_max_retries=3,
     # Task routing for Agent OS v2
     task_routes={
         # General tasks (existing)
         "app.tasks.*": {"queue": "general"},
+        "app.tasks.mission_tasks.*": {"queue": "missions"},
+        "tasks.ai_tasks.*": {"queue": "ai"},
+        "tasks.payout_tasks.*": {"queue": "payouts"},
 
         # Agent OS v2 nodes
         "app.agent_os.nodes.scout_*": {"queue": "scout"},
@@ -51,5 +60,8 @@ celery_app.conf.update(
         "ammo": {"exchange": "ammo", "routing_key": "ammo"},
         "bounty": {"exchange": "bounty", "routing_key": "bounty"},
         "fast": {"exchange": "fast", "routing_key": "fast"},
+        "missions": {"exchange": "missions", "routing_key": "missions"},
+        "ai": {"exchange": "ai", "routing_key": "ai"},
+        "payouts": {"exchange": "payouts", "routing_key": "payouts"},
     },
 )

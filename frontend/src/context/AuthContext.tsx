@@ -1,6 +1,6 @@
 import { createContext, useContext, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { api } from '../services/api';
+import api from '../services/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthContextValue {

@@ -24,6 +24,9 @@ class User(Base):
     onboarded = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    reputation_score = Column(Integer, default=0)
+    level = Column(Integer, default=1)
+    xp = Column(Integer, default=0)
 
     # Relationships
     agents = relationship("Agent", back_populates="user", cascade="all, delete-orphan")
@@ -163,6 +166,9 @@ class Offer(Base):
     current_claims = Column(Integer, default=0)
     expires_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(String, default="active")  # active, expired, completed
+    auto_boost = Column(Boolean, default=False)
+    boost_count = Column(Integer, default=0)
+    last_boosted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     claims = relationship("OfferClaim", back_populates="offer")
@@ -178,6 +184,10 @@ class OfferClaim(Base):
     unique_code = Column(String, nullable=True, unique=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    claimed_at = Column(DateTime(timezone=True), server_default=func.now())
+    position = Column(Integer, nullable=True)
+    boosted = Column(Boolean, default=False)
+    payout_amount = Column(Numeric(10, 2), default=0.0)
 
     offer = relationship("Offer", back_populates="claims")
     performance = relationship("OfferPerformance", back_populates="claim", uselist=False)
@@ -222,3 +232,12 @@ class Leaderboard(Base):
     offers_completed = Column(Integer, default=0)
     total_earned = Column(Numeric(10, 2), default=0.0)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class MissionShare(Base):
+    __tablename__ = "mission_shares"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    mission_id = Column(UUID(as_uuid=True), ForeignKey("offer_claims.id", ondelete="CASCADE"), nullable=False)
+    bonus_granted = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
