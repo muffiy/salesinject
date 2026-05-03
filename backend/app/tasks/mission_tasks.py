@@ -5,6 +5,7 @@ from ..core.ws_manager import manager
 from ..database import SessionLocal
 from ..services.mission_service import claim_mission, start_mission, check_geofence, resolve_competition, finalize_mission
 from ..services.payout_service import calculate_payout
+from ..models import OfferClaim
 
 
 def _db() -> Session:
@@ -53,7 +54,14 @@ def task_submit_mission(self, claim_id: str, file_url: str):
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True)
 def task_validate_video(self, claim_id: str, file_url: str):
-    return {"claim_id": claim_id, "file_url": file_url}
+    db = _db()
+    try:
+        claim = db.query(OfferClaim).filter_by(id=claim_id).first()
+        if not claim or claim.status != "submitted":
+            raise ValueError("Mission must be submitted before validation")
+        return {"claim_id": claim_id, "file_url": file_url}
+    finally:
+        db.close()
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True)

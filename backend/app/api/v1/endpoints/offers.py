@@ -12,6 +12,7 @@ from typing import Optional, List, Any
 from ...deps import get_db, get_current_user, get_current_brand
 from ....models import User, Offer, OfferClaim, OfferPerformance
 from ....tasks import send_offer_alerts, process_payout
+from ....services.mission_service import mark_submitted
 
 router = APIRouter()
 
@@ -195,20 +196,20 @@ def complete_offer(
         .filter(
             OfferClaim.offer_id == offer_id,
             OfferClaim.influencer_id == current_user.id,
-            OfferClaim.status.in_(["claimed", "arrived"]),
+            OfferClaim.status.in_(["claimed", "in_progress", "arrived", "submitted"]),
         )
         .first()
     )
     if not claim:
         raise HTTPException(status_code=404, detail="No active claim found for this offer")
 
-    if claim.status == "pending_review":
+    if claim.status == "submitted":
         return {"message": "Proof already submitted", "claim_id": str(claim.id)}
 
     if claim.status != "arrived":
         raise HTTPException(status_code=400, detail="Must arrive before submitting")
 
-    claim.status = "pending_review"
+    mark_submitted(db, str(claim.id))
     claim.proof_url = proof_url
     db.commit()
 

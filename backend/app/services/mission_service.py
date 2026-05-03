@@ -1,8 +1,16 @@
 from datetime import datetime, timezone
 import uuid
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from ..models import OfferClaim
+
+MISSION_STATES = ("created", "claimed", "in_progress", "arrived", "submitted", "completed")
+
+
+def _must_transition(current: str, expected: str) -> None:
+    if current != expected:
+        raise ValueError(f"Invalid state transition: expected {expected}, got {current}")
 
 
 def claim_mission(db: Session, user_id: str, offer_id: str) -> OfferClaim:
@@ -15,9 +23,11 @@ def claim_mission(db: Session, user_id: str, offer_id: str) -> OfferClaim:
 
 def start_mission(db: Session, claim_id: str) -> None:
     claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id)).first()
-    if claim:
-        claim.status = "in_progress"
-        db.commit()
+    if not claim:
+        raise ValueError("Claim not found")
+    _must_transition(claim.status, "claimed")
+    claim.status = "in_progress"
+    db.commit()
 
 
 def check_geofence(db: Session, claim_id: str, lat: float, lon: float) -> bool:
@@ -27,14 +37,24 @@ def check_geofence(db: Session, claim_id: str, lat: float, lon: float) -> bool:
         return False
     if claim.status == "arrived":
         return True
+    _must_transition(claim.status, "in_progress")
     claim.status = "arrived"
     db.commit()
     return True
 
 
+def mark_submitted(db: Session, claim_id: str) -> None:
+    claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id)).first()
+    if not claim:
+        raise ValueError("Claim not found")
+    _must_transition(claim.status, "arrived")
+    claim.status = "submitted"
+    db.commit()
+
+
 def resolve_competition(db: Session, claim_id: str) -> dict:
     claim_uuid = uuid.UUID(claim_id)
-    claim = db.query(OfferClaim).filter(OfferClaim.id == claim_uuid).first()
+    claim = db.query(OfferClaim).filter(OfferClaim.id == claim_uuid).with_for_update().first()
     if not claim:
         return {"winner": False, "position": 99}
     all_claims = (
@@ -51,9 +71,13 @@ def resolve_competition(db: Session, claim_id: str) -> dict:
 
 def finalize_mission(db: Session, claim_id: str, payout: float, position: int) -> None:
     claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id)).first()
-    if claim:
-        claim.status = "completed"
-        claim.completed_at = datetime.now(timezone.utc)
-        claim.payout_amount = payout
-        claim.position = position
-        db.commit()
+    if not claim:
+        return
+    if claim.status == "completed":
+        return
+    _must_transition(claim.status, "submitted")
+    claim.status = "completed"
+    claim.completed_at = datetime.now(timezone.utc)
+    claim.payout_amount = payout
+    claim.position = position
+    db.commit()
