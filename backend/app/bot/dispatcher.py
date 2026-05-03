@@ -3,7 +3,10 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from app.core.config import settings
 
-bot = Bot(token=settings.BOT_TOKEN) if settings.BOT_TOKEN else None
+try:
+    bot = Bot(token=settings.BOT_TOKEN) if settings.BOT_TOKEN and settings.BOT_TOKEN != "dummy" else None
+except Exception:
+    bot = None
 dp = Dispatcher()
 router = Router()
 

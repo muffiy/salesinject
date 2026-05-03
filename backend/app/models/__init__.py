@@ -3,6 +3,7 @@ from .models import (
     User,
     Agent,
     AgentSession,
+    AgentMessage,
     AgentMemory,
     Task,
     UserTask,
@@ -14,6 +15,7 @@ from .models import (
     OfferPerformance,
     PayoutTransaction,
     Leaderboard,
+    MissionShare,
 )
 
 __all__ = [
@@ -21,6 +23,7 @@ __all__ = [
     "User",
     "Agent",
     "AgentSession",
+    "AgentMessage",
     "AgentMemory",
     "Task",
     "UserTask",
@@ -32,4 +35,5 @@ __all__ = [
     "OfferPerformance",
     "PayoutTransaction",
     "Leaderboard",
+    "MissionShare",
 ]

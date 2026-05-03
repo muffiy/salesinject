@@ -9,7 +9,7 @@ import json
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-from ..models_agent_os import AgentSession, AgentMessage, AgentMemory
+from ..models.models import AgentSession, AgentMemory, AgentMessage
 from ..database import SessionLocal
 from ..core.redis_client import r
 

@@ -197,6 +197,70 @@ celery_app.conf.beat_schedule = {
 }
 
 
+# ── Offer tasks ───────────────────────────────────────────────────────────────
+
+@celery_app.task
+def send_offer_alerts(offer_id: str):
+    """Notify nearby creators about a new offer (stub — extend with push/Telegram)."""
+    import logging
+    logging.getLogger(__name__).info(f"send_offer_alerts: offer_id={offer_id} (stub)")
+
+
+@celery_app.task
+def process_payout(claim_id: str):
+    """Process payout for a completed claim."""
+    from .database import SessionLocal
+    from .models import OfferClaim, PayoutTransaction, Offer, User
+    db = SessionLocal()
+    try:
+        claim = db.query(OfferClaim).filter(OfferClaim.id == claim_id).first()
+        if not claim:
+            return {"error": "claim not found"}
+        offer = db.query(Offer).filter(Offer.id == claim.offer_id).first()
+        if not offer:
+            return {"error": "offer not found"}
+        bounty = float(offer.bounty_value or 0)
+        payout = PayoutTransaction(
+            user_id=claim.influencer_id,
+            claim_id=claim.id,
+            amount=bounty,
+            currency="TND",
+            status="completed",
+        )
+        db.add(payout)
+        influencer = db.query(User).filter(User.id == claim.influencer_id).first()
+        if influencer:
+            influencer.wallet_balance = float(influencer.wallet_balance or 0) + bounty
+            influencer.total_earnings = float(influencer.total_earnings or 0) + bounty
+        db.commit()
+        return {"status": "paid", "amount": bounty}
+    except Exception as exc:
+        db.rollback()
+        raise exc
+    finally:
+        db.close()
+
+
+@celery_app.task
+def run_scout_mission(niche: str, location: str, user_id: str, chat_id=None):
+    """Run a scout mission for the bot."""
+    from .database import SessionLocal
+    from .services.paperclip_agent import run_scout_mission as _run
+    db = SessionLocal()
+    try:
+        return _run(user_id=user_id, niche=niche, location=location, chat_id=chat_id, db=db)
+    finally:
+        db.close()
+
+
+@celery_app.task
+def generate_ad_idea(user_id: str, prompt: str):
+    """Generate an ad idea (stub — extend with OpenAI)."""
+    import logging
+    logging.getLogger(__name__).info(f"generate_ad_idea: user_id={user_id} prompt={prompt[:50]}")
+    return {"status": "ok", "idea": "stub"}
+
+
 # ── Phase 5 ── Agent learning task ────────────────────────────────────────────
 
 @celery_app.task

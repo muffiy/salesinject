@@ -9,9 +9,18 @@ import json
 import logging
 import time
 from typing import Dict, Any, Optional, Callable
-from kafka import KafkaProducer, KafkaConsumer
-from kafka.errors import KafkaError, NoBrokersAvailable
 from ..core.config import settings
+
+try:
+    from kafka import KafkaProducer, KafkaConsumer
+    from kafka.errors import KafkaError, NoBrokersAvailable
+    KAFKA_AVAILABLE = True
+except ImportError:
+    KAFKA_AVAILABLE = False
+    KafkaProducer = None
+    KafkaConsumer = None
+    KafkaError = Exception
+    NoBrokersAvailable = Exception
 
 logger = logging.getLogger(__name__)
 

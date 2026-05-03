@@ -61,7 +61,19 @@ class AgentSession(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True)
+    agent_type = Column(String, nullable=True)
     status = Column(String, default="active")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class AgentMessage(Base):
+    __tablename__ = "agent_messages"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("agent_sessions.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String)
+    content = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

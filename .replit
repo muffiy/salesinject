@@ -1,0 +1,76 @@
+modules = ["nodejs-20", "web", "python-3.12"]
+[agent]
+expertMode = true
+stack = "BEST_EFFORT_FALLBACK"
+
+[nix]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+SECRET_KEY = "74803d21f52022fd269e793fe82e24dae64b406e76188c7cedcf1280c06aab2a"
+DEBUG = "false"
+USE_WEBHOOK = "false"
+BOT_TOKEN = "dummy"
+MINI_APP_URL = "https://t.me/dummy"
+VITE_API_BASE_URL = "/api/v1"
+PLATFORM_COMMISSION_RATE = "0.10"
+AGENT_OS_DEBUG = "false"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend API"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "Backend API"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && uvicorn app.main:app --host localhost --port 8000"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+
+[[ports]]
+localPort = 8001
+externalPort = 3001
+exposeLocalhost = true
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["sh", "-c", "cd backend && uvicorn app.main:app --host localhost --port 8000 & cd frontend && npm run dev"]
+build = ["sh", "-c", "cd frontend && npm install && npm run build"]

@@ -115,4 +115,44 @@ def get_leaderboard(
 
 @router.get("/progress")
 def get_user_progress(current_user: User = Depends(get_current_user)):
+    """Return the user's XP, level, and reputation progress."""
+    return {
+        "xp": current_user.xp or 0,
+        "level": current_user.level or 1,
+        "reputation_score": current_user.reputation_score or 0,
+        "rank": current_user.rank or "bronze",
+    }
 
+
+@router.get("/me/profile")
+def get_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return a rich user profile for the Agent OS profile page."""
+    tasks_done = (
+        db.query(UserTask)
+        .filter(UserTask.user_id == current_user.id, UserTask.status == "approved")
+        .count()
+    )
+    active_agents = (
+        db.query(Agent)
+        .filter(Agent.user_id == current_user.id, Agent.is_active == True)
+        .count()
+    )
+    return {
+        "id": str(current_user.id),
+        "username": current_user.username or "",
+        "first_name": current_user.first_name or "",
+        "role": current_user.role or "creator",
+        "wallet_balance": float(current_user.wallet_balance or 0),
+        "rank": current_user.rank or "bronze",
+        "total_earnings": float(current_user.total_earnings or 0),
+        "streak_days": current_user.streak_days or 0,
+        "tasks_completed": tasks_done,
+        "active_agents": active_agents,
+        "xp": current_user.xp or 0,
+        "level": current_user.level or 1,
+        "reputation_score": current_user.reputation_score or 0,
+        "onboarded": current_user.onboarded or False,
+    }
