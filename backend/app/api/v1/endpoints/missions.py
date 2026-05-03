@@ -53,7 +53,8 @@ def boost_mission(claim_id: str, db: Session = Depends(get_db), current_user: Us
 
 @router.post('/{offer_id}/resolve')
 def resolve_offer_competition(offer_id: str):
-    resolve_competition_async.delay(offer_id)
+    offer_uuid = _parse_uuid(offer_id, "offer_id")
+    resolve_competition_async.delay(str(offer_uuid))
     return {'status': 'queued'}
 
 
