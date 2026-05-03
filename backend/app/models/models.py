@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Float, Numeric, DateTime, ForeignKey, BigInteger, Boolean, Text, JSON
+from sqlalchemy import Column, String, Integer, Float, Numeric, DateTime, ForeignKey, BigInteger, Boolean, Text, JSON, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
@@ -176,6 +176,13 @@ class Offer(Base):
 
 class OfferClaim(Base):
     __tablename__ = "offer_claims"
+    __table_args__ = (
+        UniqueConstraint("offer_id", "influencer_id", name="uq_offer_claim_offer_user"),
+        Index("idx_claims_offer", "offer_id"),
+        Index("idx_claims_user", "influencer_id"),
+        Index("idx_claims_status", "status"),
+        Index("idx_claims_completed_at", "completed_at"),
+    )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     offer_id = Column(UUID(as_uuid=True), ForeignKey("offers.id", ondelete="CASCADE"))
     influencer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
