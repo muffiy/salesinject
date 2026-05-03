@@ -71,6 +71,19 @@ def mark_ai_reviewed(db: Session, claim_id: str) -> None:
     db.commit()
 
 
+
+def boost_mission(db: Session, claim_id: str) -> OfferClaim:
+    claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id)).first()
+    if not claim:
+        raise ValueError("Claim not found")
+    if claim.status in ("completed", "paid"):
+        return claim
+    claim.boosted = True
+    claim.payout_amount = round(float(claim.payout_amount or 0) * 1.3, 2)
+    db.commit()
+    db.refresh(claim)
+    return claim
+
 def resolve_competition(db: Session, claim_id: str) -> dict:
     claim_uuid = uuid.UUID(claim_id)
     claim = db.query(OfferClaim).filter(OfferClaim.id == claim_uuid).with_for_update().first()

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from ...deps import get_db, get_current_user
 from ....models import OfferClaim, MissionShare, User
-from ....services.mission_service import claim_mission, submit_mission
+from ....services.mission_service import claim_mission, submit_mission, boost_mission as boost_mission_service
 from ....tasks.mission_tasks import resolve_competition_async
 
 router = APIRouter()
@@ -45,11 +45,9 @@ def boost_mission(claim_id: str, db: Session = Depends(get_db), current_user: Us
     claim = db.query(OfferClaim).filter(OfferClaim.id == claim_uuid, OfferClaim.influencer_id == current_user.id).first()
     if not claim:
         raise HTTPException(status_code=404, detail='Claim not found')
-    if claim.status in ('completed', 'paid'):
-        return {'status': 'already_done', 'newReward': float(claim.payout_amount or 0)}
-    claim.boosted = True
-    claim.payout_amount = round(float(claim.payout_amount or 0) * 1.3, 2)
-    db.commit()
+    updated = boost_mission_service(db, claim_id)
+    if updated.status in ('completed', 'paid'):
+        return {'status': 'already_done', 'newReward': float(updated.payout_amount or 0)}
     return {'claimId': claim_id, 'boosted': True, 'reviewMode': 'strict'}
 
 
