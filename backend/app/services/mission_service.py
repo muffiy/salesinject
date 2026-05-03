@@ -38,6 +38,17 @@ def claim_mission(db: Session, user_id: str, offer_id: str) -> OfferClaim:
     return claim
 
 
+
+def start_mission(db: Session, claim_id: str) -> OfferClaim:
+    claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id)).first()
+    if not claim:
+        raise ValueError("Claim not found")
+    _must_transition(claim.status, "claimed")
+    claim.status = "arrived"
+    db.commit()
+    db.refresh(claim)
+    return claim
+
 def check_geofence(db: Session, claim_id: str, lat: float, lon: float) -> bool:
     _ = (lat, lon)
     claim = db.query(OfferClaim).filter(OfferClaim.id == uuid.UUID(claim_id)).first()

@@ -7,6 +7,7 @@ from ..database import SessionLocal
 from ..models import OfferClaim
 from ..services.mission_service import (
     claim_mission,
+    start_mission,
     check_geofence,
     resolve_competition,
     finalize_mission,
@@ -26,6 +27,16 @@ def task_claim_mission(self, user_id: str, offer_id: str):
         claim = claim_mission(db, user_id, offer_id)
         manager.broadcast_nowait(f"🔥 New mission claimed by user {user_id}")
         return str(claim.id)
+    finally:
+        db.close()
+
+
+@shared_task(bind=True)
+def task_start_mission(self, claim_id: str):
+    db = _db()
+    try:
+        start_mission(db, claim_id)
+        return {"status": "arrived"}
     finally:
         db.close()
 
