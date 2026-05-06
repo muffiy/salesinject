@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { TelegramUser } from '../hooks/useTelegramUser';
 import { StatCard, TaskCard } from '../components/UI';
-import { getMe, getTasks, runAgentTask, pollUntilDone, getLatestScout } from '../services/api';
+import { getMe, getTasks, runAgentTask, pollUntilDone, getLatestScoutReport } from '../services/api';
 import { GlobalMap } from '../components/Map';
 import type { MapDataPoint } from '../components/DeckGLMap';
 
@@ -45,7 +45,7 @@ export function Dashboard({ user: _user, onNavigate }: DashboardProps) {
   
   const refreshScoutResults = async () => {
     try {
-      const data = await getLatestScout();
+      const data = await getLatestScoutReport();
       if (data && data.map_data && data.map_data.length > 0) {
         setMapData(data.map_data);
       }
@@ -54,16 +54,12 @@ export function Dashboard({ user: _user, onNavigate }: DashboardProps) {
     }
   };
 
-  const pollTaskStatus = async (taskId: string) => {
-    await pollUntilDone(taskId);
-  };
-
   const handleScout = async () => {
     setScouting(true);
     setScoutError('');
     try {
-      const { task_id } = await runAgentTask('', 'General', 'Scout Mission', 'scout');
-      await pollTaskStatus(task_id);
+      const result = await runAgentTask({ niche: 'General', location: 'Global', task_type: 'scout' });
+      if (result?.task_id) await pollUntilDone(result.task_id);
       await refreshScoutResults();
     } catch (e: any) {
       setScoutError(e.message || 'Scout failed.');

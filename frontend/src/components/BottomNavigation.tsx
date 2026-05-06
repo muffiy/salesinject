@@ -15,6 +15,7 @@ export default function BottomNavigation({ hasActiveMission = false }: BottomNav
 
   const tabs = [
     { id: 'home', label: 'Home', icon: '🎯', path: '/' },
+    { id: 'map', label: 'Map', icon: '🌍', path: '/map' },
     { id: 'intel', label: 'Intel', icon: '📊', path: '/intel' },
   ];
 

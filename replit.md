@@ -1,7 +1,7 @@
 # SalesInject — Genesis Market (Telegram Mini App)
 
 ## Overview
-AI-powered influencer marketing platform built as a Telegram Mini App. Creators discover and claim geo-located brand missions on a DeckGL map, earn rewards, and level up via an Agent OS system.
+AI-powered influencer marketing platform built as a Telegram Mini App. Creators discover and claim geo-located brand missions on a Leaflet map, earn rewards, and level up via an Agent OS system.
 
 ## Architecture
 - **Frontend**: React + Vite (TypeScript), runs on port 5000
@@ -73,7 +73,7 @@ backend/
 - Alembic migrations in `backend/alembic/`
 - Key models: User, Agent, Task, UserTask, Offer, OfferClaim, ScoutReport, PayoutTransaction, Leaderboard, MissionShare
 
-## Notable Fixes Applied During Import
+## Notable Fixes Applied
 - Redis client made optional with no-op fallback stub
 - Telegram bot gracefully disabled when BOT_TOKEN is invalid
 - Missing `Map.tsx` component created (DeckGLMap wrapper)
@@ -81,3 +81,11 @@ backend/
 - Event bus Kafka import made optional
 - Added missing Celery tasks: `send_offer_alerts`, `process_payout`, `run_scout_mission`, `generate_ad_idea`
 - Added missing API endpoints: `GET /missions/history`, `GET /earnings/`, `GET /users/me/profile`
+- **DeckGL → Leaflet**: Replaced `@deck.gl/react` + `maplibre-gl` with `leaflet` + `react-leaflet` because Replit preview has no WebGL GPU. Map uses OSM tiles with CSS dark inversion filter.
+- **MissionFeed geolocation fix**: Removed blocking `getCurrentPosition` — uses Tunis as immediate fallback, then updates if geolocation succeeds. Home screen no longer hangs on "Finding nearby missions..."
+- **Map route added**: `/map` route added to `App.tsx`; Map tab (🌍) added to `BottomNavigation`. MapPage now accessible from nav.
+- **vite.config.ts**: Added `optimizeDeps.exclude` for all removed deck.gl/maplibre packages to prevent stale optimizer errors.
+
+## Gotchas
+- Intel/Earnings/Profile API calls return 401 in the browser preview — correct behavior since JWTs come from Telegram WebApp `initData` auth. Works correctly inside Telegram.
+- SSH key resets on Replit env restart; re-run `mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts` and re-add the pub key to GitHub before pushing.

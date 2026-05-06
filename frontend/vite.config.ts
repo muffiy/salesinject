@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -14,5 +13,8 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
-  }
+  },
+  optimizeDeps: {
+    exclude: ['@deck.gl/core', '@deck.gl/layers', '@deck.gl/react', '@deck.gl/widgets', 'maplibre-gl', 'react-map-gl'],
+  },
 })

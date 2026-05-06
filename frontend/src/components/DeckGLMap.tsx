@@ -1,9 +1,6 @@
-import { useState } from 'react';
-import DeckGL from '@deck.gl/react';
-import { ScatterplotLayer, TextLayer } from '@deck.gl/layers';
-import { Map, MapProvider, Marker } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import { GenZMarkerBadge } from './GenZOverlay';
+import { useEffect, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 export interface MapDataPoint {
   id: string;
@@ -26,28 +23,15 @@ interface DeckGLMapProps {
   showGlobe?: boolean;
 }
 
-const DARK_MAP_STYLE = {
-  version: 8,
-  sources: {
-    carto: {
-      type: 'raster',
-      tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'],
-      tileSize: 256,
-      attribution: '&copy; CARTO',
-    },
-  },
-  layers: [{ id: 'carto', type: 'raster', source: 'carto', minzoom: 0, maxzoom: 19 }],
-};
-
-const TYPE_COLORS: Record<string, [number, number, number]> = {
-  agent: [139, 92, 246],       // purple
-  influencer: [236, 72, 153],  // pink
-  brand: [0, 245, 255],        // cyan
-  business: [0, 255, 136],     // green
-  bounty: [255, 51, 102],      // red
-  event: [255, 214, 10],       // yellow
-  ad: [255, 0, 110],           // magenta
-  hotspot: [255, 136, 0],      // orange
+const TYPE_COLORS: Record<string, string> = {
+  agent: '#8b5cf6',
+  influencer: '#ec4899',
+  brand: '#00f5ff',
+  business: '#00ff88',
+  bounty: '#ff3366',
+  event: '#ffd60a',
+  ad: '#ff006e',
+  hotspot: '#ff8800',
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -61,155 +45,121 @@ const TYPE_ICONS: Record<string, string> = {
   hotspot: '🔥',
 };
 
-const INITIAL_VIEW_STATE = {
-  longitude: 0,
-  latitude: 20,
-  zoom: 1.5,
-  pitch: 0,
-  bearing: 0,
-};
+function makeIcon(point: MapDataPoint, selected: boolean) {
+  const color = TYPE_COLORS[point.type] ?? '#6c63ff';
+  const icon = TYPE_ICONS[point.type] ?? '📍';
+  const size = selected ? 44 : 34;
+  const html = `<div style="
+    width:${size}px;height:${size}px;
+    background:${color}22;
+    border:2px solid ${color};
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:${selected ? 18 : 14}px;
+    box-shadow:0 0 ${selected ? 16 : 8}px ${color}88;
+    cursor:pointer;">${icon}</div>`;
+  return L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+}
 
-export function DeckGLMap({ data, selectedId, onMarkerClick, showGlobe }: DeckGLMapProps) {
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+export function DeckGLMap({ data, selectedId, onMarkerClick }: DeckGLMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
-  // Marker layer — colored circles
-  const scatterLayer = new ScatterplotLayer({
-    id: 'scatter-layer',
-    data,
-    pickable: true,
-    opacity: 0.85,
-    stroked: true,
-    filled: true,
-    radiusScale: 6,
-    radiusMinPixels: 5,
-    radiusMaxPixels: 18,
-    lineWidthMinPixels: 1.5,
-    getPosition: (d: MapDataPoint) => [d.lon, d.lat],
-    getFillColor: (d: MapDataPoint) => TYPE_COLORS[d.type] ?? [108, 99, 255],
-    getLineColor: [255, 255, 255],
-    getRadius: (d: MapDataPoint) => (selectedId === d.id ? 250000 : 100000),
-    onClick: (info: any) => {
-      if (info.object && onMarkerClick) onMarkerClick(info.object);
-    },
-  });
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
 
-  // Label layer — show names for selected or high-value points
-  const textLayer = new TextLayer({
-    id: 'text-layer',
-    data: data.filter((d) => selectedId === d.id || (d.value && d.value > 500)),
-    pickable: false,
-    getPosition: (d: MapDataPoint) => [d.lon, d.lat],
-    getText: (d: MapDataPoint) => d.name,
-    getSize: 12,
-    getAngle: 0,
-    getTextAnchor: 'middle',
-    getAlignmentBaseline: 'bottom',
-    getPixelOffset: [0, -18],
-    getColor: [255, 255, 255],
-    fontFamily: 'JetBrains Mono, monospace',
-    fontWeight: 'bold',
-  });
+    const map = L.map(containerRef.current, {
+      center: [20, 0],
+      zoom: 2,
+      zoomControl: false,
+      attributionControl: false,
+    });
 
-  const layers = [scatterLayer, textLayer];
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+    }).addTo(map);
+
+    // Dark overlay to match the app theme
+    const darkPane = map.createPane('dark-overlay');
+    darkPane.style.zIndex = '200';
+    darkPane.style.pointerEvents = 'none';
+    L.imageOverlay(
+      'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=',
+      [[-90, -180], [90, 180]],
+      { opacity: 0, pane: 'dark-overlay' }
+    ).addTo(map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.control.attribution({ position: 'bottomright', prefix: '© OSM' }).addTo(map);
+
+    mapRef.current = map;
+
+    // Force Leaflet to recalculate size after mount
+    const t = setTimeout(() => { map.invalidateSize(); }, 100);
+
+    return () => {
+      clearTimeout(t);
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Sync markers when data or selectedId changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    data.forEach((point) => {
+      const marker = L.marker([point.lat, point.lon], {
+        icon: makeIcon(point, selectedId === point.id),
+      });
+
+      marker.bindTooltip(
+        `<b>${point.name}</b><br/><span style="color:${TYPE_COLORS[point.type] ?? '#fff'}">${point.type.toUpperCase()}</span>${point.value ? ` · $${point.value}` : ''}`,
+        { direction: 'top', offset: [0, -8] }
+      );
+
+      if (onMarkerClick) {
+        marker.on('click', () => onMarkerClick(point));
+      }
+
+      marker.addTo(map);
+      markersRef.current.push(marker);
+    });
+  }, [data, selectedId, onMarkerClick]);
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        background: 'var(--si-surface)',
-        borderRadius: '0px',
-        border: '1px solid var(--si-border)',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          padding: '14px 20px',
-          background: 'rgba(10, 10, 10, 0.85)',
-          backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid var(--si-border)',
-          zIndex: 10,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h3
-          style={{
-            margin: 0,
-            fontSize: '14px',
-            fontWeight: '800',
-            fontFamily: 'var(--font-display)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--war-cyan)',
-          }}
-        >
-          🌍 {showGlobe ? '3D Globe View' : 'Global Live Monitor'}
-        </h3>
-        <span
-          style={{
-            fontSize: '11px',
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--si-muted)',
-            fontWeight: 600,
-          }}
-        >
-          {data.length} SIGNALS ACTIVE
-        </span>
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '400px', background: '#1a1a2e' }}>
+      {/* Leaflet fills entire area */}
+      <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+
+      {/* Signal count badge */}
+      <div style={{
+        position: 'absolute', top: 8, right: 8, zIndex: 1000,
+        background: 'rgba(0,0,0,0.7)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        borderRadius: '20px',
+        padding: '4px 10px',
+        fontSize: '11px',
+        fontFamily: 'monospace',
+        color: '#00f5ff',
+        fontWeight: 700,
+        letterSpacing: '0.05em',
+      }}>
+        {data.length} SIGNALS
       </div>
 
-      {/* DeckGL Map */}
-      <DeckGL
-        viewState={viewState}
-        onViewStateChange={({ viewState: vs }: any) => setViewState(vs)}
-        controller={{ touchRotate: true, keyboard: true }}
-        layers={layers}
-        getTooltip={(info: any) => {
-          if (!info.object) return null;
-          const obj = info.object as MapDataPoint;
-          return {
-            html: `<div style="font-family:var(--font-mono);font-size:11px;padding:4px 8px;">
-              <b>${obj.name}</b><br/>
-              <span style="color:var(--war-cyan)">${obj.type.toUpperCase()}</span>
-              ${obj.value ? ` · $${obj.value}` : ''}
-            </div>`,
-          };
-        }}
-      >
-        <MapProvider>
-          <Map reuseMaps mapStyle={DARK_MAP_STYLE as any} />
-        </MapProvider>
-      </DeckGL>
-
-      {/* Gen-Z HTML markers rendered on top (react-map-gl Marker components) */}
-      {data.slice(0, 20).map((d) => (
-        <Marker
-          key={d.id}
-          longitude={d.lon}
-          latitude={d.lat}
-          anchor="center"
-          onClick={(e) => {
-            e.originalEvent.stopPropagation();
-            if (onMarkerClick) onMarkerClick(d);
-          }}
-          style={{ cursor: 'pointer', zIndex: selectedId === d.id ? 100 : 1 }}
-        >
-          <GenZMarkerBadge
-            label={d.name}
-            selected={selectedId === d.id}
-            icon={TYPE_ICONS[d.type]}
-            color={`rgb(${TYPE_COLORS[d.type]?.join(',')})`}
-          />
-        </Marker>
-      ))}
+      <style>{`
+        .leaflet-container { background: #1a1a2e !important; }
+        .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(0.85) saturate(0.6); }
+        .leaflet-control-attribution { font-size: 9px !important; opacity: 0.4 !important; }
+      `}</style>
     </div>
   );
 }

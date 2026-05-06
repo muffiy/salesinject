@@ -15,8 +15,11 @@ export default function MissionFeed() {
   const [isClaiming, setIsClaiming] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Get user location
+  // Get user location — use immediate fallback, then update if geolocation succeeds
   useEffect(() => {
+    // Start loading immediately with fallback location (Tunis)
+    setUserLocation({ lat: 36.8065, lon: 10.1815 });
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -25,15 +28,9 @@ export default function MissionFeed() {
             lon: position.coords.longitude,
           });
         },
-        () => {
-          // Fallback to default location (Tunis)
-          setUserLocation({ lat: 36.8065, lon: 10.1815 });
-        },
-        { timeout: 5000 }
+        () => {}, // already have fallback
+        { timeout: 3000, maximumAge: 60000 }
       );
-    } else {
-      // Fallback to default location
-      setUserLocation({ lat: 36.8065, lon: 10.1815 });
     }
   }, []);
 

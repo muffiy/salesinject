@@ -4,6 +4,7 @@ import MissionFeed from './pages/MissionFeed';
 import ActiveMission from './pages/ActiveMission';
 import IntelHub from './pages/IntelHub';
 import LoopEngine from './pages/LoopEngine';
+import { MapPage } from './pages/MapPage';
 import SplashScreen from './components/SplashScreen';
 import PermissionGate from './components/PermissionGate';
 import BottomNavigation from './components/BottomNavigation';
@@ -62,6 +63,7 @@ function App() {
             <Route path="/" element={<MissionFeed />} />
             <Route path="/mission/:offerId" element={<ActiveMission />} />
             <Route path="/intel" element={<IntelHub />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/replay/:traceId" element={<LoopEngine />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
