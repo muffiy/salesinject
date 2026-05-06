@@ -62,6 +62,7 @@ class AgentSession(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True)
     agent_type = Column(String, nullable=True)
+    parent_session_id = Column(UUID(as_uuid=True), ForeignKey("agent_sessions.id", ondelete="SET NULL"), nullable=True)
     status = Column(String, default="active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
