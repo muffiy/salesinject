@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .endpoints import agents, auth, telegram, users, tasks, scout, health, offers, missions, earnings
+from .endpoints import agents, auth, telegram, users, tasks, scout, health, offers, missions, earnings, sessions
 from .ws import scout as ws_scout, stream, telemetry, live
 
 api_router = APIRouter()
@@ -13,6 +13,7 @@ api_router.include_router(scout.router, prefix="/scout", tags=["Scout"])
 api_router.include_router(offers.router, prefix="/offers", tags=["Offers"])
 api_router.include_router(missions.router, prefix="/missions", tags=["Missions"])
 api_router.include_router(earnings.router, prefix="/earnings", tags=["Earnings"])
+api_router.include_router(sessions.router, prefix="/sessions", tags=["Sessions"])
 api_router.include_router(health.router, prefix="/health", tags=["Health"])
 
 # WebSocket routes (no prefix)

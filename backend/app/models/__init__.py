@@ -17,6 +17,7 @@ from .models import (
     Leaderboard,
     MissionShare,
 )
+from .content import BrandVoice, ContentPiece, ContentTemplate
 
 __all__ = [
     "Base",
@@ -36,4 +37,7 @@ __all__ = [
     "PayoutTransaction",
     "Leaderboard",
     "MissionShare",
+    "BrandVoice",
+    "ContentTemplate",
+    "ContentPiece",
 ]

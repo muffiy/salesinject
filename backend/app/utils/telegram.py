@@ -1,5 +1,6 @@
 import hmac
 import hashlib
+import time
 from urllib.parse import parse_qsl
 from ..core.config import settings
 
@@ -22,8 +23,23 @@ def verify_telegram_data(init_data: str) -> dict:
     secret_key = hmac.new(b"WebAppData", settings.BOT_TOKEN.encode(), hashlib.sha256).digest()
     computed_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
-    # NOTE: Disabling hash enforcement momentarily to prevent local testing block without valid token
-    # if computed_hash != received_hash:
-    #     raise ValueError("Hash mismatch")
+    if computed_hash != received_hash:
+        if settings.ALLOW_INSECURE_TG_INIT_DATA:
+            return parsed
+        raise ValueError("Hash mismatch")
+
+    # Optional replay protection if auth_date is present.
+    auth_date_raw = parsed.get("auth_date")
+    if auth_date_raw:
+        try:
+            auth_date = int(auth_date_raw)
+            now = int(time.time())
+            if now - auth_date > settings.TELEGRAM_INITDATA_MAX_AGE_SECONDS:
+                if settings.ALLOW_INSECURE_TG_INIT_DATA:
+                    return parsed
+                raise ValueError("initData expired")
+        except ValueError:
+            if not settings.ALLOW_INSECURE_TG_INIT_DATA:
+                raise ValueError("Invalid auth_date")
 
     return parsed
