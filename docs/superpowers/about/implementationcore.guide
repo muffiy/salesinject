@@ -1,0 +1,595 @@
+# Production-Grade Implementation Prompt — SalesInject AI
+
+You are a senior AI systems architect and production backend engineer.
+
+Build a **production-ready, scalable, secure, multi-user AI sales agent platform** called **SalesInject AI**.
+
+The platform is a **Telegram Mini App + FastAPI backend** where every user owns a personal AI sales agent capable of:
+
+* learning user goals
+* storing long-term memory
+* generating outreach
+* finding leads
+* managing missions
+* ranking opportunities
+* creating reusable skills
+* tracking profit and IQ progression
+
+The platform must feel like:
+
+* an AI operator
+* a gamified money engine
+* a viral social system
+* a real-time autonomous assistant
+
+The final implementation must be deployable directly to production.
+
+---
+
+# CORE PRODUCT REQUIREMENTS
+
+The app is:
+
+* chat-first
+* mission-driven
+* money-focused
+* gamified
+* highly viral
+
+Users interact primarily through:
+
+* conversational chat
+* live mission updates
+* IQ progression
+* dashboards
+* referrals
+* agent activity feeds
+
+The AI agent must:
+
+* maintain isolated long-term memory per user
+* create reusable skills automatically
+* execute async missions
+* orchestrate tasks via Celery workers
+* stream progress in real-time
+* operate through a stateless shared LLM architecture
+
+---
+
+# REQUIRED STACK
+
+## Backend
+
+* FastAPI
+* PostgreSQL
+* pgvector
+* Redis
+* Celery
+* Redpanda/Kafka event bus
+* SQLAlchemy 2.0
+* Alembic
+
+## AI Layer
+
+* OpenRouter integration
+* RAG memory injection
+* Stateless shared LLM orchestration
+* Vision-capable models
+* Multi-agent mission execution
+
+## Frontend
+
+* Telegram Mini App
+* Next.js
+* Tailwind
+* Framer Motion
+* WebSocket real-time updates
+
+## Infrastructure
+
+* Docker Compose
+* Nginx
+* Gunicorn
+* MinIO/S3 storage
+* Prometheus
+* Grafana
+* Sentry
+
+---
+
+# SYSTEM ARCHITECTURE REQUIREMENTS
+
+Implement a distributed AI orchestration system with:
+
+## Agent OS
+
+Support:
+
+* planner agents
+* scout agents
+* outreach agents
+* ranking agents
+* analytics agents
+
+Each mission must:
+
+* maintain trace_id
+* maintain user_id
+* remain fully isolated
+* support retries
+* support event streaming
+* support progress persistence
+
+---
+
+# MULTI-USER SESSION ISOLATION
+
+Critical requirement:
+
+The entire platform must support:
+
+* multiple users
+* concurrent missions
+* isolated memory
+* isolated agent context
+* isolated embeddings
+* isolated event streams
+
+No user memory or context may leak across sessions.
+
+Every:
+
+* Celery task
+* DB query
+* event
+* cache key
+* embedding query
+* LLM prompt
+
+must include:
+
+* user_id
+* trace_id
+* mission_id
+
+---
+
+# CORE FEATURES TO IMPLEMENT
+
+## 1. Chat-First AI Interface
+
+Users can:
+
+* type
+* speak
+* upload images
+* paste URLs
+
+The AI:
+
+* responds conversationally
+* asks clarifying questions
+* launches async missions
+* streams mission progress live
+
+---
+
+## 2. Product Image → Lead Pipeline
+
+When a user uploads a product image:
+
+### AI must:
+
+1. Analyze image
+2. Identify niche/product category
+3. Generate:
+
+   * hooks
+   * descriptions
+   * scripts
+   * outreach copy
+4. Launch scout mission
+5. Find leads
+6. Rank leads
+7. Suggest outreach
+8. Notify user of replies
+
+---
+
+## 3. Mission System
+
+Implement:
+
+* mission lifecycle engine
+* retries
+* concurrency limits
+* progress tracking
+* event broadcasting
+* live updates
+
+Mission states:
+
+* created
+* queued
+* running
+* retrying
+* completed
+* failed
+
+---
+
+## 4. Long-Term Memory
+
+Implement Hermes-style memory:
+
+* vector embeddings
+* retrieval
+* memory scoring
+* contextual injection
+* relationship memory
+
+Store:
+
+* user preferences
+* target audience
+* successful campaigns
+* outreach tone
+* prior conversations
+* successful hooks
+
+---
+
+## 5. Skills System
+
+Agents automatically generate reusable skills.
+
+Implement:
+
+* `/skills`
+* `SKILL.md`
+* metadata
+* execution configs
+* scoring
+* persistence
+
+Example skills:
+
+* lead_scraper_instagram
+* boutique_outreach_writer
+* luxury_brand_pitcher
+
+---
+
+## 6. Dashboard System
+
+Implement real-time dashboard showing:
+
+* agent balance
+* today profit
+* total profit
+* IQ score
+* active missions
+* mission progress
+* live agent activity
+
+---
+
+## 7. Gamification Layer
+
+Implement:
+
+* IQ progression
+* XP
+* referral rewards
+* level unlocks
+* mission streaks
+* leaderboards
+* shareable wins
+
+---
+
+# BACKEND IMPLEMENTATION REQUIREMENTS
+
+Generate complete production-ready code for:
+
+## API
+
+* FastAPI routes
+* JWT auth
+* Telegram auth
+* WebSockets
+* streaming endpoints
+
+## Database
+
+* SQLAlchemy models
+* Alembic migrations
+* pgvector integration
+* indexes
+* optimized queries
+
+## Celery
+
+* queue routing
+* retries
+* timeouts
+* dead-letter handling
+* concurrency controls
+
+Queues:
+
+* core
+* scout
+* outreach
+* analytics
+* memory
+* notifications
+
+---
+
+# TESTING REQUIREMENTS
+
+Create full testing infrastructure.
+
+Target:
+
+* 75%+ coverage
+
+Include:
+
+## Unit Tests
+
+* concurrency isolation
+* memory isolation
+* queue routing
+* retry logic
+* workflow execution
+
+## Integration Tests
+
+* end-to-end missions
+* WebSocket updates
+* Telegram integration
+* image upload pipeline
+
+## Load Tests
+
+* 100+ concurrent users
+* mission stress tests
+* Redis saturation tests
+
+Use:
+
+* pytest
+* pytest-asyncio
+* locust
+
+---
+
+# OBSERVABILITY REQUIREMENTS
+
+Implement:
+
+## Structured Logging
+
+Include:
+
+* trace_id
+* user_id
+* mission_id
+* task duration
+* errors
+
+## Monitoring
+
+Integrate:
+
+* Prometheus
+* Grafana
+* Sentry
+
+## Health Checks
+
+Create:
+
+* /health
+* /health/ready
+* /metrics
+
+---
+
+# SECURITY REQUIREMENTS
+
+Implement production-grade security.
+
+Include:
+
+* rate limiting
+* CORS restrictions
+* API key validation
+* JWT validation
+* secret rotation
+* SQL injection prevention
+* input sanitization
+* request validation
+* secure headers
+
+Never:
+
+* expose secrets
+* store raw API keys
+* allow unrestricted origins
+
+---
+
+# PERFORMANCE REQUIREMENTS
+
+Optimize for:
+
+* <500ms p95 API response
+* 100+ concurrent users
+* async DB access
+* Redis caching
+* vector search performance
+* queue throughput
+
+Implement:
+
+* DB indexes
+* slow query profiler
+* connection pooling
+* Redis cache layer
+
+---
+
+# DEPLOYMENT REQUIREMENTS
+
+Generate:
+
+## Docker Infrastructure
+
+* docker-compose.prod.yml
+* Dockerfiles
+* nginx config
+* worker scaling config
+
+## Deployment Docs
+
+Generate:
+
+* DEPLOYMENT.md
+* PRODUCTION_CHECKLIST.md
+* ENVIRONMENT_SETUP.md
+
+## Include:
+
+* SSL setup
+* VPS setup
+* backup strategy
+* rollback strategy
+* monitoring setup
+* scaling instructions
+
+---
+
+# REQUIRED FILE OUTPUTS
+
+Generate ALL required production files including:
+
+## Backend
+
+* routes
+* services
+* workers
+* schemas
+* middleware
+* models
+* tasks
+* agent orchestration
+
+## Infra
+
+* docker configs
+* nginx
+* env templates
+
+## Testing
+
+* conftest.py
+* unit tests
+* integration tests
+* load tests
+
+## Docs
+
+* deployment docs
+* architecture docs
+* API docs
+* operational checklists
+
+---
+
+# CODE QUALITY RULES
+
+All code must:
+
+* be fully typed
+* contain real implementations
+* contain no placeholders
+* contain no TODOs
+* contain no fake mocks
+* include docstrings
+* pass linting
+* pass tests
+
+Use:
+
+* production patterns
+* dependency injection
+* async-first architecture
+* clean service separation
+* scalable event-driven design
+
+---
+
+# IMPLEMENTATION ORDER
+
+Generate components in this exact order:
+
+1. Core architecture
+2. Database models + migrations
+3. Agent orchestration system
+4. Celery task infrastructure
+5. Memory + vector retrieval
+6. Chat APIs + WebSockets
+7. Mission engine
+8. Skills system
+9. Dashboard APIs
+10. Gamification system
+11. Observability
+12. Security hardening
+13. Testing suite
+14. Load testing
+15. Docker deployment
+16. Production documentation
+
+---
+
+# FINAL VALIDATION REQUIREMENTS
+
+Before finalizing:
+
+Run:
+
+* pytest
+* mypy
+* pylint
+
+Verify:
+
+* 75%+ coverage
+* no critical security warnings
+* all services boot successfully
+* all queues process correctly
+* all endpoints documented
+* Docker deployment works
+* health checks pass
+
+---
+
+# FINAL OUTPUT FORMAT
+
+At completion provide:
+
+1. Full generated file tree
+2. Summary of architecture
+3. Created services
+4. Queue topology
+5. DB schema summary
+6. Security checklist
+7. Deployment instructions
+8. Monitoring instructions
+9. Verification checklist
+10. Scaling recommendations
+
+The final result must be deployable directly to production and capable of supporting a viral AI sales agent platform with real-time multi-user orchestration.

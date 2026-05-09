@@ -19,7 +19,13 @@
       "Bash(npm run *)",
       "Bash(docker system *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(mkdir -p ~/.ssh)",
+      "Bash(ssh-keygen -t rsa -b 4096 -C \"muffiy@example.com\" -f ~/.ssh/id_rsa -N \"\")",
+      "Read(//c/Users/ASUS/.ssh/**)",
+      "Bash(git fetch *)",
+      "Bash(ssh *)"
     ]
   }
 }
