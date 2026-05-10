@@ -18,3 +18,5 @@ exa_py
 gunicorn
 openai
 kafka-python==2.0.2
+prometheus-client==0.21.1
+sentry-sdk==2.22.0

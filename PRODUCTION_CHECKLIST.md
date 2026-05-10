@@ -36,3 +36,37 @@ This checklist must be fully executed before making SalesInject publicly availab
 - [ ] Build & Start all services: `docker compose -f docker-compose.prod.yml up -d --build`
 - [ ] Check Nginx logs for any proxy errors: `docker compose -f docker-compose.prod.yml logs nginx`
 - [ ] Access the app via Telegram and test a Scout Mission to verify end-to-end functionality.
+
+## 0. Pre-Deployment Verification
+- [ ] Run pytest suite: `cd backend && python -m pytest ../tests/ -v --cov=app --cov-report=term-missing`
+- [ ] Verify coverage >= 75%
+- [ ] No critical security warnings from `bandit -r backend/app/`
+- [ ] `docker compose -f docker-compose.prod.yml build` succeeds
+- [ ] All `.env` variables are filled (no dummy values)
+
+## 7. Observability
+- [ ] Verify Prometheus `/metrics` endpoint returns data
+- [ ] Set up Sentry DSN in `.env` (`SENTRY_DSN=...`)
+- [ ] Verify Sentry captures a test error
+- [ ] Set up Grafana dashboard using metrics from `/metrics`
+- [ ] Configure log aggregation (e.g., Loki, ELK) for structured JSON logs
+
+## 8. Backup & Recovery
+- [ ] Set up automated PostgreSQL backups:
+      ```bash
+      docker compose -f docker-compose.prod.yml exec db pg_dump -U postgres salesinject > backup_$(date +%Y%m%d).sql
+      ```
+- [ ] Schedule daily backups via cron
+- [ ] Verify backup file is restorable:
+      ```bash
+      docker compose -f docker-compose.prod.yml exec -T db psql -U postgres salesinject < backup.sql
+      ```
+- [ ] Document recovery procedure in runbook
+
+## 9. SSL/Domain Setup
+- [ ] Point domain A-record to VPS IP
+- [ ] Run Certbot: `sudo certbot --nginx -d yourdomain.com`
+- [ ] Uncomment HTTPS block in `nginx/nginx.conf`
+- [ ] Set `MINI_APP_URL=https://yourdomain.com` in `.env`
+- [ ] Verify HTTPS redirect works (HTTP → HTTPS)
+- [ ] Test Telegram Mini App loads over HTTPS

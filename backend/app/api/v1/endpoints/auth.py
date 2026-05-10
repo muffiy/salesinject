@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from jose import jwt
@@ -10,6 +10,7 @@ import hashlib
 from app.core.database import get_db
 from app.core.config import settings
 from app.models.models import User
+from app.core.ratelimit import rate_limit
 
 router = APIRouter()
 
@@ -33,7 +34,8 @@ def verify_telegram_init_data(init_data: str, bot_token: str) -> dict:
     return data_dict
 
 @router.post("/telegram")
-def auth_telegram(data: TelegramAuth, db: Session = Depends(get_db)):
+@rate_limit(max_requests=10, window_seconds=60)
+def auth_telegram(data: TelegramAuth, request: Request, db: Session = Depends(get_db)):
     if not settings.BOT_TOKEN:
         # For local development without token
         import json

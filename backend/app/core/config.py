@@ -15,9 +15,11 @@ class Settings(BaseSettings):
     USE_WEBHOOK: bool = os.getenv("USE_WEBHOOK", "False").lower() in ("true", "1", "t")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8000")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/salesinject")
     REDPANDA_BROKERS: str = os.getenv("REDPANDA_BROKERS", "redpanda:9092")
     PLATFORM_COMMISSION_RATE: float = float(os.getenv("PLATFORM_COMMISSION_RATE", "0.10"))
     AGENT_OS_DEBUG: bool = os.getenv("AGENT_OS_DEBUG", "False").lower() in ("true", "1", "t")
+    SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
 
 settings = Settings()

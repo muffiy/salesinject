@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Request
 from ....services.telegram_service import send_message, send_mini_app_button
+from app.core.ratelimit import rate_limit
 
 router = APIRouter()
 
 
 @router.post("/webhook")
+@rate_limit(max_requests=10, window_seconds=60)
 async def telegram_webhook(request: Request):
     """Receive Telegram bot updates via webhook (alternative to polling)."""
     update = await request.json()
