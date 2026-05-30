@@ -125,6 +125,18 @@
   }
 }
 
+/* Scroll reveal animations */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.section-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {

@@ -1,18 +1,378 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+/* ── Stats counter hook ── */
+function useCountUp(target: number, duration = 2000) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let rafId: number;
+    let start: number | null = null;
+    const step = (now: number) => {
+      if (!start) start = now;
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) rafId = requestAnimationFrame(step);
+    };
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [target, duration]);
+  return count;
+}
+
+function Stat({ value, label, suffix = '', accent = false }: { value: number; label: string; suffix?: string; accent?: boolean }) {
+  const count = useCountUp(value);
+  return (
+    <div className="stat">
+      <div className="stat-val">
+        {count}{suffix}
+        {accent && <span className="accent">+</span>}
+      </div>
+      <div className="stat-label">{label}</div>
+    </div>
+  );
+}
 
 export function Landing() {
-  return (
-    <div style={{ background: 'var(--war-black)', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
-      <h1 className="hero-title" style={{ marginBottom: '24px' }}>SALESINJECT</h1>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--si-muted)', marginBottom: '40px', maxWidth: '600px' }}>
-        Weaponize your Ad Campaigns with AI Mercenaries. Deploy agents to scout, match, and conquer your target niches.
-      </p>
-      
-      <a href="https://t.me/SalesInjectBot" className="btn-primary" style={{ textDecoration: 'none', padding: '20px 40px', fontSize: '20px' }}>
-        <span className="btn-text">DEPLOY YOUR AGENTS</span>
-      </a>
+  const navigate = useNavigate();
 
-      {/* Background aesthetics */}
-      <div className="btn-glow" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '400px', opacity: 0.1, zIndex: 0, pointerEvents: 'none' }} />
+  return (
+    <div style={{
+      background: 'var(--bg, #050810)',
+      color: 'var(--text, #f1f5f9)',
+      fontFamily: "'Inter', sans-serif",
+      minHeight: '100vh',
+      overflow: 'hidden',
+    }}>
+      {/* ── STYLES (scoped to landing via inline injection) ── */}
+      <style>{`
+        .landing * { box-sizing: border-box; margin: 0; padding: 0; }
+        .landing {
+          --bg: #050810;
+          --surface: #0d1117;
+          --surface2: #111827;
+          --border: rgba(255,255,255,0.07);
+          --accent: #6366f1;
+          --accent2: #8b5cf6;
+          --accent3: #06b6d4;
+          --green: #10b981;
+          --yellow: #f59e0b;
+          --text: #f1f5f9;
+          --muted: #94a3b8;
+          --card-bg: rgba(255,255,255,0.03);
+        }
+        .landing .hero::before {
+          content: '';
+          position: absolute; top: -20%; left: 50%; transform: translateX(-50%);
+          width: 800px; height: 800px;
+          background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .landing .hero::after {
+          content: '';
+          position: absolute; bottom: -10%; right: -10%;
+          width: 500px; height: 500px;
+          background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .landing .gradient-text {
+          background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .landing .btn-primary {
+          background: linear-gradient(135deg, var(--accent), var(--accent2));
+          color: #fff; padding: 0.9rem 2rem; border-radius: 10px;
+          font-weight: 700; font-size: 1rem; text-decoration: none;
+          display: inline-flex; align-items: center; gap: 0.5rem;
+          transition: transform 0.2s, box-shadow 0.2s;
+          box-shadow: 0 4px 24px rgba(99,102,241,0.4);
+          border: none; cursor: pointer;
+        }
+        .landing .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.5); }
+        .landing .btn-secondary {
+          background: var(--card-bg); border: 1px solid var(--border);
+          color: var(--text); padding: 0.9rem 2rem; border-radius: 10px;
+          font-weight: 600; font-size: 1rem; text-decoration: none;
+          display: inline-flex; align-items: center; gap: 0.5rem;
+          transition: border-color 0.2s, background 0.2s;
+          cursor: pointer;
+        }
+        .landing .btn-secondary:hover { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+        .landing .stats-bar {
+          display: flex; gap: 3rem; flex-wrap: wrap; justify-content: center;
+          padding: 1.5rem 2rem;
+          border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+          background: rgba(255,255,255,0.02);
+        }
+        .landing .stat { text-align: center; }
+        .landing .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--text); }
+        .landing .stat-val .accent { color: var(--accent); }
+        .landing .stat-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .landing .steps {
+          display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;
+        }
+        .landing .step {
+          background: var(--card-bg); border: 1px solid var(--border);
+          border-radius: 16px; padding: 2rem 1.5rem;
+          position: relative; transition: border-color 0.2s, transform 0.2s;
+        }
+        .landing .step:hover { border-color: var(--accent); transform: translateY(-4px); }
+        .landing .step-num {
+          width: 40px; height: 40px;
+          background: linear-gradient(135deg, var(--accent), var(--accent2));
+          border-radius: 10px; display: flex; align-items: center; justify-content: center;
+          font-weight: 800; font-size: 1.1rem; color: #fff; margin-bottom: 1rem;
+        }
+        @media (max-width: 640px) {
+          .landing .stats-bar { gap: 1.5rem; }
+        }
+      `}</style>
+
+      <div className="landing">
+        {/* ── NAV ── */}
+        <nav style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '1rem 2rem',
+          background: 'rgba(5,8,16,0.85)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '1.1rem' }}>
+            <div style={{
+              width: 32, height: 32,
+              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+              borderRadius: 8,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1rem',
+            }}>S</div>
+            Sales<span style={{ color: 'var(--accent)' }}>Inject</span>
+          </div>
+          <ul style={{ listStyle: 'none', display: 'flex', gap: '2rem' }}>
+            {['Features', 'How It Works', 'Map'].map(item => (
+              <li key={item}>
+                <a href={`#${item.toLowerCase().replace(/\s/g, '-')}`}
+                  style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: '0.9rem' }}>
+                  {item}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <button className="btn-primary" style={{
+            padding: '0.5rem 1.2rem',
+            fontSize: '0.9rem',
+            transition: 'var(--transition-medium)'
+          }}
+            onClick={() => navigate('/onboard')}>
+            Get Started
+          </button>
+        </nav>
+
+        {/* ── HERO ── */}
+        <section className="hero" style={{
+          minHeight: '100vh',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          textAlign: 'center', padding: '7rem 2rem 4rem',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+            background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
+            color: '#a5b4fc', padding: '0.35rem 0.9rem', borderRadius: '999px',
+            fontSize: '0.8rem', fontWeight: 600, marginBottom: '1.5rem',
+            letterSpacing: '0.05em', textTransform: 'uppercase',
+          }}>
+            ⚡ Genesis Market Launch
+          </div>
+
+          <h1 style={{
+            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+            fontWeight: 900, lineHeight: 1.1,
+            letterSpacing: '-0.03em', maxWidth: '800px',
+            marginBottom: '1.5rem',
+          }}>
+            Turn Content Into{' '}
+            <span className="gradient-text">Viral Campaigns</span>
+          </h1>
+
+          <p style={{
+            fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+            color: 'var(--muted)', maxWidth: '600px', marginBottom: '2.5rem',
+          }}>
+            Connect brands with local influencers. Deploy AI agents to scout, match, and conquer your target niches — all inside Telegram.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '4rem' }}>
+            <button className="btn-primary" style={{
+              padding: '0.5rem 1.2rem',
+              fontSize: '0.9rem',
+              transition: 'var(--transition-medium)'
+            }}
+              onClick={() => navigate('/onboard')}>
+              Start Now →
+            </button>
+            <a href="https://t.me/SalesInjectBot" className="btn-secondary" target="_blank" rel="noopener noreferrer">
+              Open in Telegram
+            </a>
+          </div>
+
+          {/* ── STATS BAR ── */}
+          <div className="stats-bar" style={{
+            width: '100%',
+            maxWidth: '800px',
+            transition: 'var(--transition-medium)'
+          }}>
+            <Stat value={2500} label="Active Influencers" suffix="+" accent />
+            <Stat value={500} label="Campaigns Completed" suffix="+" accent />
+            <Stat value={98} label="Satisfaction Rate" suffix="%" />
+            <Stat value={24} label="Hour Payout" suffix="h" />
+          </div>
+        </section>
+
+        {/* ── HOW IT WORKS ── */}
+        <section id="how-it-works" style={{ padding: '6rem 2rem' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{
+              display: 'inline-block',
+              background: 'rgba(99,102,241,0.12)', color: '#a5b4fc',
+              padding: '0.3rem 0.8rem', borderRadius: '6px',
+              fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em',
+              textTransform: 'uppercase', marginBottom: '1rem',
+            }}>
+              How It Works
+            </div>
+            <h2 style={{
+              fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+              fontWeight: 800, letterSpacing: '-0.02em',
+              marginBottom: '1rem', lineHeight: 1.2,
+            }}>
+              From Setup to Viral in 3 Steps
+            </h2>
+            <p style={{ color: 'var(--muted)', fontSize: '1.1rem', maxWidth: '560px', marginBottom: '3rem' }}>
+              Whether you're a brand or influencer, SalesInject handles the matchmaking so you can focus on creating.
+            </p>
+
+            <div className="steps">
+              {[
+                { num: '01', title: 'Create Your Profile', desc: 'Sign up as a brand or influencer. Set your niche, budget, and campaign goals in under 2 minutes.' },
+                { num: '02', title: 'AI Matchmaking', desc: 'Our agents scan the 3D map to find the perfect local influencers or brands for your campaign.' },
+                { num: '03', title: 'Launch & Earn', desc: 'Deploy campaigns, track viral metrics in real-time, and get paid within 24 hours.' },
+              ].map(step => (
+                <div key={step.num} className="step" style={{
+                  transition: 'var(--transition-medium)',
+                  border: '1px solid var(--border)'
+                }}>
+                  <div className="step-num">{step.num}</div>
+                  <h3 style={{ fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.5rem' }}>{step.title}</h3>
+                  <p style={{ color: 'var(--muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── FEATURES ─── */}
+        <section id="features" style={{ padding: '6rem 2rem', background: 'rgba(255,255,255,0.015)' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{
+              display: 'inline-block',
+              background: 'rgba(99,102,241,0.12)', color: '#a5b4fc',
+              padding: '0.3rem 0.8rem', borderRadius: '6px',
+              fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em',
+              textTransform: 'uppercase', marginBottom: '1rem',
+            }}>
+              Features
+            </div>
+            <h2 style={{
+              fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+              fontWeight: 800, letterSpacing: '-0.02em',
+              marginBottom: '1rem', lineHeight: 1.2,
+            }}>
+              Everything You Need to Go Viral
+            </h2>
+            <p style={{ color: 'var(--muted)', fontSize: '1.1rem', maxWidth: '560px', marginBottom: '3rem' }}>
+              Location-based matching, AI content generation, and gamified market share — all in one platform.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1.5rem',
+            }}>
+              {[
+                { icon: '📍', title: '3D Map Discovery', desc: 'Find influencers and brand opportunities on a living 3D map. See who\'s active in your area in real-time.' },
+                { icon: '🤖', title: 'AI Agent Swarm', desc: 'Deploy scout agents to find matches, generate video hooks, and optimize campaigns automatically.' },
+                { icon: '💰', title: '24h Instant Payouts', desc: 'Get paid within 24 hours of campaign completion. No waiting weeks for your earnings.' },
+                { icon: '📊', title: 'Viral Score Tracking', desc: 'Real-time analytics on engagement, reach, and viral potential. Know what\'s working instantly.' },
+                { icon: '🏆', title: 'Gamified Leaderboard', desc: 'Compete with other influencers and brands. Earn badges, climb ranks, unlock exclusive perks.' },
+                { icon: '🎯', title: 'Smart Niche Targeting', desc: 'AI-powered niche matching ensures your campaign reaches the right audience every time.' },
+              ].map(f => (
+                <div key={f.title} className="step" style={{
+                  padding: '1.8rem',
+                  transition: 'var(--transition-medium)',
+                  border: '1px solid var(--border)'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.75rem', transition: 'var(--transition-fast)' }}>{f.icon}</div>
+                  <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>{f.title}</h3>
+                  <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── FINAL CTA ─── */}
+        <section style={{
+          padding: '6rem 2rem',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: '600px', height: '600px',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative' }}>
+            <h2 style={{
+              fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontWeight: 800, letterSpacing: '-0.02em',
+              marginBottom: '1rem', lineHeight: 1.2,
+            }}>
+              Ready to <span className="gradient-text">Dominate</span> Your Market?
+            </h2>
+            <p style={{ color: 'var(--muted)', fontSize: '1.1rem', marginBottom: '2rem' }}>
+              Join thousands of brands and influencers already using SalesInject. No credit card required.
+            </p>
+            <button className="btn-primary" style={{
+              padding: '1rem 2.5rem',
+              fontSize: '1.1rem',
+              transition: 'var(--transition-medium)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+              onClick={() => navigate('/onboard')}>
+              Start Now →
+            </button>
+          </div>
+        </section>
+
+        {/* ─── FOOTER ─── */}
+        <footer style={{
+          padding: '2rem',
+          borderTop: '1px solid var(--border)',
+          textAlign: 'center',
+          color: 'var(--muted)',
+          fontSize: '0.85rem',
+        }}>
+          <p>© 2026 SalesInject. All rights reserved. Built with ❤️ for creators.</p>
+        </footer>
+      </div>
     </div>
   );
 }
