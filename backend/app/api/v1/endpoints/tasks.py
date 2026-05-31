@@ -7,9 +7,9 @@ from pydantic import BaseModel
 from typing import Optional, List
 import uuid
 
-from ...deps import get_db, get_current_user, get_current_brand
-from ....models import User, Task, UserTask
-from ....tasks import agent_learning_task
+from app.api.deps import get_db, get_current_user, get_current_brand
+from app.models import User, Task, UserTask
+from app.tasks import agent_learning_task
 
 router = APIRouter()
 

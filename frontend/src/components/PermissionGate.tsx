@@ -62,6 +62,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
       padding: '24px',
       background: 'var(--war-black)',
       color: 'white',
+      transition: 'var(--transition-medium)'
     }}>
       <h2 style={{
         fontSize: '28px',
@@ -69,6 +70,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
         marginBottom: '32px',
         fontFamily: 'var(--font-display)',
         textAlign: 'center',
+        transition: 'var(--transition-medium)'
       }}>
         We need access to:
       </h2>
@@ -82,6 +84,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
+        transition: 'var(--transition-medium)'
       }}>
         <li style={{
           display: 'flex',
@@ -91,6 +94,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
           background: 'rgba(255, 255, 255, 0.05)',
           borderRadius: '12px',
           border: '1px solid var(--war-gray-700)',
+          transition: 'var(--transition-medium)'
         }}>
           <div style={{
             fontSize: '24px',
@@ -101,6 +105,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
             justifyContent: 'center',
             background: 'var(--war-cyan)20',
             borderRadius: '8px',
+            transition: 'var(--transition-medium)'
           }}>
             📍
           </div>
@@ -110,6 +115,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
               fontSize: '16px',
               fontWeight: '700',
               marginBottom: '4px',
+              transition: 'var(--transition-medium)'
             }}>
               Location
             </div>
@@ -117,6 +123,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
               fontFamily: 'var(--font-body)',
               fontSize: '14px',
               color: 'var(--si-muted)',
+              transition: 'var(--transition-medium)'
             }}>
               Find nearby missions
             </div>
@@ -131,6 +138,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
           background: 'rgba(255, 255, 255, 0.05)',
           borderRadius: '12px',
           border: '1px solid var(--war-gray-700)',
+          transition: 'var(--transition-medium)'
         }}>
           <div style={{
             fontSize: '24px',
@@ -141,6 +149,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
             justifyContent: 'center',
             background: 'var(--war-purple)20',
             borderRadius: '8px',
+            transition: 'var(--transition-medium)'
           }}>
             📷
           </div>
@@ -150,6 +159,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
               fontSize: '16px',
               fontWeight: '700',
               marginBottom: '4px',
+              transition: 'var(--transition-medium)'
             }}>
               Camera
             </div>
@@ -157,6 +167,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
               fontFamily: 'var(--font-body)',
               fontSize: '14px',
               color: 'var(--si-muted)',
+              transition: 'var(--transition-medium)'
             }}>
               Capture content
             </div>
@@ -171,6 +182,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
           background: 'rgba(255, 255, 255, 0.05)',
           borderRadius: '12px',
           border: '1px solid var(--war-gray-700)',
+          transition: 'var(--transition-medium)'
         }}>
           <div style={{
             fontSize: '24px',
@@ -181,6 +193,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
             justifyContent: 'center',
             background: 'var(--war-green)20',
             borderRadius: '8px',
+            transition: 'var(--transition-medium)'
           }}>
             🔔
           </div>
@@ -190,6 +203,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
               fontSize: '16px',
               fontWeight: '700',
               marginBottom: '4px',
+              transition: 'var(--transition-medium)'
             }}>
               Notifications
             </div>
@@ -197,6 +211,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
               fontFamily: 'var(--font-body)',
               fontSize: '14px',
               color: 'var(--si-muted)',
+              transition: 'var(--transition-medium)'
             }}>
               Mission alerts
             </div>
@@ -210,6 +225,11 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
           disabled={isRequesting}
           size="large"
           variant="primary"
+          style={{
+            transition: 'var(--transition-medium)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
         >
           {isRequesting ? 'REQUESTING...' : 'ALLOW ALL'}
         </PulseButton>
@@ -222,6 +242,7 @@ export default function PermissionGate({ onGrant }: PermissionGateProps) {
         color: 'var(--si-muted)',
         textAlign: 'center',
         maxWidth: '400px',
+        transition: 'var(--transition-medium)'
       }}>
         Permissions are required for the full experience. You can modify them later in your device settings.
       </p>

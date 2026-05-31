@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PulseButton } from '../components';
 import { getNearbyOffers, claimOffer } from '../services/osApi';
+import { HoverLift } from '@/components/HoverLift';
+import { RippleEffect } from '@/components/RippleEffect';
 
 /**
  * MissionFeed - Home screen showing only the closest active offer
@@ -14,6 +16,7 @@ export default function MissionFeed() {
   const [isLoading, setIsLoading] = useState(true);
   const [isClaiming, setIsClaiming] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const missionCardRef = useRef<HTMLDivElement>(null);
 
   // Get user location — use immediate fallback, then update if geolocation succeeds
   useEffect(() => {
@@ -87,24 +90,23 @@ export default function MissionFeed() {
 
   if (isLoading) {
     return (
-      <div style={{
-        height: '100vh',
+      <div className="skeleton-loader" style={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--war-black)',
-        color: 'white',
-        padding: '24px',
+        gap: '16px',
+        padding: '24px'
       }}>
-        <div style={{ fontSize: '32px', marginBottom: '16px' }}>📍</div>
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '14px',
-          color: 'var(--war-cyan)',
-        }}>
-          Finding nearby missions...
-        </div>
+        {/* Skeleton cards */}
+        {[1,2,3].map((_, i) => (
+          <div key={i} className="skeleton-card" style={{
+            height: '120px',
+            background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
+            borderRadius: '8px'
+          }}
+          />
+        ))}
       </div>
     );
   }
@@ -170,28 +172,40 @@ export default function MissionFeed() {
       color: 'white',
     }}>
       {/* Header */}
-      <div>
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '14px',
-          color: 'var(--war-cyan)',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          ⚡ ACTIVE MISSION
-        </div>
+      <HoverLift liftAmount={4} className="mission-card" ref={missionCardRef} style={{
+        position: 'relative',
+        overflow: 'hidden',
+        border: '1px solid var(--border)',
+        borderRadius: '12px'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--accent)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border)';
+      }}>
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '14px',
+            color: 'var(--war-cyan)',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            ⚡ ACTIVE MISSION
+          </div>
 
-        <h1 style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '48px',
-          fontWeight: '900',
-          marginBottom: '16px',
-          lineHeight: 1.1,
-        }}>
-          {closestOffer.location}
-        </h1>
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '48px',
+            fontWeight: '900',
+            marginBottom: '16px',
+            lineHeight: 1.1,
+          }}>
+            {closestOffer.location}
+          </h1>
 
         {/* Reward */}
         <div style={{
@@ -234,7 +248,8 @@ export default function MissionFeed() {
             <span>HIGH DEMAND ({closestOffer.claimCount} users)</span>
           </div>
         )}
-      </div>
+      {/* End of mission-card div */}
+      </HoverLift>
 
       {/* Locked teasers and claim button */}
       <div style={{ position: 'relative' }}>
@@ -280,25 +295,13 @@ export default function MissionFeed() {
         </div>
 
         {/* Claim button */}
-        <PulseButton
-          onClick={handleClaim}
-          disabled={isClaiming}
-          pulse={!isClaiming}
-          size="large"
-          variant="primary"
-        >
-          {isClaiming ? 'CLAIMING...' : '⚡ CLAIM & START'}
-        </PulseButton>
+        <RippleEffect onClick={handleClaim}>
+          <button className="btn-primary" disabled={isClaiming}>
+            {isClaiming ? 'CLAIMING...' : '⚡ CLAIM & START'}
+          </button>
+        </RippleEffect>
       </div>
 
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-          }
-        `}
-      </style>
     </div>
   );
 }

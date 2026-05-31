@@ -28,5 +28,60 @@ export default function LiveTicker() {
 
   const text = useMemo(() => messages[index] ?? FALLBACK[0], [messages, index]);
 
-  return <div className="fixed top-0 left-0 right-0 z-[1100] h-6 bg-[#111] text-[10px] font-mono text-cyan-300 px-3 flex items-center whitespace-nowrap overflow-hidden">⚡ LIVE: {text}</div>;
+  return (
+    <div className="live-ticker" style={{
+      position: 'fixed',
+      bottom: '60px',
+      left: 0,
+      right: 0,
+      height: '20px',
+      background: 'rgba(16, 185, 129, 0.1)',
+      borderTop: '1px solid rgba(16, 185, 129, 0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 16px',
+      fontSize: '0.85rem',
+      color: 'var(--green)',
+      overflow: 'hidden',
+      transition: 'var(--transition-medium)'
+    }}>
+      <div className="ticker-content" style={{
+        display: 'flex',
+        gap: '16px',
+        animation: 'tickerMove 20s linear infinite'
+      }}>
+        {/* Ticker items - split the text into parts for individual animation */}
+        {text.split(' ').map((word, wordIndex) => (
+          <span
+            key={`${index}-${wordIndex}`}
+            className="ticker-item"
+            style={{
+              transition: 'var(--transition-fast)',
+              padding: '4px 8px',
+              borderRadius: '4px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {word}{wordIndex < text.split(' ').length - 1 ? ' ' : ''}
+          </span>
+        ))}
+      </div>
+
+      {/* Animated icon */}
+      <span className="ticker-icon" style={{
+        marginLeft: '8px',
+        animation: 'float 3s ease-in-out infinite',
+        display: 'inline-block'
+      }}>
+        ⚡
+      </span>
+    </div>
+  );
 }

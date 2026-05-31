@@ -36,6 +36,8 @@ class User(Base):
     payments = relationship("PayoutTransaction", back_populates="user")
     scout_reports = relationship("ScoutReport", back_populates="user")
     paperclip_items = relationship("PaperclipItem", back_populates="user")
+    profile = relationship("Profile", back_populates="user", uselist=False)
+    sessions = relationship("Session", back_populates="user")
 
 
 class Agent(Base):
@@ -242,6 +244,21 @@ class Leaderboard(Base):
     offers_completed = Column(Integer, default=0)
     total_earned = Column(Numeric(10, 2), default=0.0)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AgentSuggestion(Base):
+    """AI-generated suggestion for a user — approve/reject via Telegram inline buttons."""
+    __tablename__ = "agent_suggestions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"), nullable=True)
+    suggestion_type = Column(String, nullable=False)  # mission, scout, content_gen
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    action_data = Column(JSONB, default={})
+    status = Column(String, default="pending")  # pending, approved, rejected
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    responded_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class MissionShare(Base):

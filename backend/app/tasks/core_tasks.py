@@ -8,8 +8,8 @@ import httpx
 from datetime import datetime, timezone
 from celery import shared_task
 
-from .worker import celery_app
-from .core.config import settings
+from ..worker import celery_app
+from ..core.config import settings
 
 
 # ── Phase 3 ── Agent task (Celery) ────────────────────────────────────────────
@@ -194,10 +194,44 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.scrape_ads_task",
         "schedule": 86400.0,  # Once every 24 hours
     },
+    "rank-decay-hourly": {
+        "task": "app.tasks.rank_decay_task",
+        "schedule": 3600.0,  # Once every hour
+    },
 }
 
 
 # ── Offer tasks ───────────────────────────────────────────────────────────────
+
+# ── Rank decay task ───────────────────────────────────────────────────────
+
+@celery_app.task
+def rank_decay_task():
+    """
+    Periodic task: apply rank decay to users who are not shielded.
+    Decreases streak_days by 1 (to a minimum of 0) for each user without an active shield.
+    """
+    from ..models import User
+    from ..core.redis_client import r
+    from .database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        users = db.query(User).all()
+        for user in users:
+            shield_key = f"shield:{user.id}"
+            if r.exists(shield_key):
+                # User has an active shield, skip decay
+                continue
+            # Apply decay: decrease streak_days by 1, but not below 0
+            if user.streak_days > 0:
+                user.streak_days -= 1
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise exc
+    finally:
+        db.close()
 
 @celery_app.task
 def send_offer_alerts(offer_id: str):

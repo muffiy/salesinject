@@ -17,6 +17,8 @@ export function Onboarding() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [selectedNiche, setSelectedNiche] = useState(NICHES[0]);
+  const [inputHovered, setInputHovered] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
 
   const handleNext = () => {
     if (step === 1 && !name) return;
@@ -25,6 +27,12 @@ export function Onboarding() {
     } else {
       // Complete flow and move to app
       navigate('/app');
+    }
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
     }
   };
 
@@ -46,6 +54,22 @@ export function Onboarding() {
           <div className="label">PHASE {step} // 3</div>
         </div>
 
+        {/* Progress Indicator */}
+        <div className="onboarding-progress" style={{
+          height: '4px',
+          background: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+          margin: '24px 0'
+        }}>
+          <div className="progress-fill" style={{
+            width: `${step / 3 * 100}%`,
+            height: '100%',
+            background: 'linear-gradient(90deg, var(--accent), var(--accent2))',
+            transition: 'width 0.5s ease-out'
+          }}></div>
+        </div>
+
         <div style={{ position: 'relative', zIndex: 1 }}>
           {step === 1 && (
             <div className="input-wrapper" style={{ animation: 'scanline 0.5s ease-out' }}>
@@ -62,11 +86,24 @@ export function Onboarding() {
               <label className="input-label" style={{ textAlign: 'center', display: 'block' }}>ENTER COMMANDER ALIAS</label>
               <input 
                 autoFocus
-                className="input-terminal" 
+                className="onboarding-input" 
                 placeholder="_e.g. NeoBrand" 
                 value={name} 
                 onChange={e => setName(e.target.value)} 
-                style={{ textAlign: 'center', fontSize: '18px', padding: '16px' }}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                onMouseEnter={() => setInputHovered(true)}
+                onMouseLeave={() => setInputHovered(false)}
+                style={{ 
+                  textAlign: 'center', 
+                  fontSize: '18px', 
+                  padding: '16px',
+                  transition: 'var(--transition-medium)',
+                  border: inputFocused ? `1px solid var(--accent)` : inputHovered ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid var(--border)',
+                  borderRadius: '8px',
+                  background: inputFocused ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.03)',
+                  boxShadow: inputFocused ? '0 0 0 2px rgba(99, 102, 241, 0.2)' : 'none'
+                }}
               />
             </div>
           )}
@@ -76,25 +113,21 @@ export function Onboarding() {
               <label className="input-label">SELECT TARGET DIRECTIVE</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto', paddingRight: '8px' }}>
                 {NICHES.map(niche => (
-                  <button 
+                  <div 
                     key={niche.id}
                     onClick={() => setSelectedNiche(niche)}
+                    className="onboarding-option"
                     style={{
-                      background: selectedNiche.id === niche.id ? `${niche.color}22` : 'transparent',
-                      border: `1px solid ${selectedNiche.id === niche.id ? niche.color : 'var(--si-border)'}`,
-                      color: selectedNiche.id === niche.id ? niche.color : 'var(--si-text)',
-                      padding: '16px',
-                      borderRadius: '4px',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '14px',
-                      transition: 'all 0.2s',
-                      boxShadow: selectedNiche.id === niche.id ? `inset 0 0 10px ${niche.color}22` : 'none'
+                      transition: 'var(--transition-medium)',
+                      border: selectedNiche.id === niche.id ? `1px solid ${niche.color}` : '1px solid var(--border)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      background: selectedNiche.id === niche.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                      cursor: 'pointer'
                     }}
                   >
                     {selectedNiche.id === niche.id ? '▶ ' : '  '} {niche.label}
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -129,9 +162,27 @@ export function Onboarding() {
             </div>
           )}
 
-          <button className="btn-primary" style={{ width: '100%', marginTop: '16px' }} onClick={handleNext}>
-            {step === 3 ? 'START DEPLOYMENT' : 'NEXT'}
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '24px' }}>
+            <button className="btn-secondary" onClick={handleBack} disabled={step === 1} style={{
+              width: '100%',
+              padding: '16px',
+              fontSize: '1rem',
+              transition: 'var(--transition-medium)'
+            }}>
+              Go Back
+            </button>
+            <button className="btn-primary" onClick={handleNext} style={{
+              width: '100%',
+              padding: '16px',
+              fontSize: '1rem',
+              fontWeight: '700',
+              transition: 'var(--transition-medium)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {step === 3 ? 'START DEPLOYMENT' : 'NEXT'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

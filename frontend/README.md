@@ -2,6 +2,19 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Subtle Motion & Feedback System
+
+This frontend implements a subtle motion and feedback system to enhance user engagement through micro-interactions and responsive feedback. See [SUBTLE_MOTION_FEEDBACK.md](./SUBTLE_MOTION_FEEDBACK.md) for detailed documentation.
+
+### Key Features
+- **Hover Lift Effects**: Interactive elements lift on hover for tactile feedback
+- **Click Ripple Feedback**: Material-inspired ripple effects on clicks
+- **Pulse Animations**: Subtle pulsing on key CTAs to draw attention
+- **Scroll Reveal Animations**: Sections animate in as user scrolls
+- **Loading States**: Skeleton loaders with shimmer animations
+- **Reusable Components**: HoverLift, RippleEffect, and PulseAnimation for consistency
+- **Performance Optimized**: GPU-accelerated animations, will-change properties, prefers-reduced-motion support
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

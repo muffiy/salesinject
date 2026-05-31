@@ -17,6 +17,8 @@ from .models import (
     Leaderboard,
     MissionShare,
 )
+from .user import Profile
+from .session import Session
 
 __all__ = [
     "Base",
@@ -36,4 +38,6 @@ __all__ = [
     "PayoutTransaction",
     "Leaderboard",
     "MissionShare",
+    "Profile",
+    "Session",
 ]

@@ -10,6 +10,7 @@ from typing import Dict, Any, List
 from ...agent_os.runtime import run_async_safe
 from ...agent_os.tracer import WarTracer
 from ...agent_os.budget import check_budget, add_cost
+from ...services.memory_injection import inject_memory_context
 
 
 async def scout_rank(context: Dict[str, Any]) -> Dict[str, Any]:
@@ -44,8 +45,19 @@ async def scout_rank(context: Dict[str, Any]) -> Dict[str, Any]:
         influencers = collect_result.get("influencers", [])
         niche = collect_result.get("niche", "general")
 
-        # Rank influencers
-        ranked_influencers = await _rank_influencers(influencers, niche)
+        # Inject memory context for better AI analysis
+        memory_context = ""
+        try:
+            # Create a query based on the niche and influencer data for memory search
+            query = f"Influencer marketing analysis for {niche} niche"
+            memory_context = await inject_memory_context(user_id, query)
+        except Exception as e:
+            # Fail gracefully - if memory injection fails, continue without context
+            tracer.log_step(trace_id, f"MEMORY INJECTION WARNING: {str(e)}")
+            memory_context = ""
+
+        # Rank influencers with memory context
+        ranked_influencers = await _rank_influencers(influencers, niche, memory_context)
 
         # Generate analysis report
         report = await _generate_analysis_report(ranked_influencers, niche)
@@ -79,13 +91,14 @@ async def scout_rank(context: Dict[str, Any]) -> Dict[str, Any]:
         }
 
 
-async def _rank_influencers(influencers: List[Dict[str, Any]], niche: str) -> List[Dict[str, Any]]:
+async def _rank_influencers(influencers: List[Dict[str, Any]], niche: str, context: str = "") -> List[Dict[str, Any]]:
     """
     Rank influencers by relevance to niche.
 
     Args:
         influencers: List of influencer profiles
         niche: Target niche
+        context: Memory context string to inject into the LLM prompt
 
     Returns:
         Ranked list of influencers
@@ -99,7 +112,7 @@ async def _rank_influencers(influencers: List[Dict[str, Any]], niche: str) -> Li
 
         # Convert to string for analysis
         influencers_str = json.dumps(influencers, indent=2)
-        analysis = analyze_influencers(influencers_data=influencers, niche=niche)
+        analysis = analyze_influencers(influencers_data=influencers, niche=niche, context=context)
 
         # Parse analysis and apply ranking
         ranked = _parse_ai_ranking(analysis, influencers)

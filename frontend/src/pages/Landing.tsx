@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { HoverLift } from '@/components/HoverLift';
+import { RippleEffect } from '@/components/RippleEffect';
+import { PulseAnimation } from '@/components/PulseAnimation';
 
 /* ── Stats counter hook ── */
 function useCountUp(target: number, duration = 2000) {
@@ -37,6 +40,43 @@ function Stat({ value, label, suffix = '', accent = false }: { value: number; la
 
 export function Landing() {
   const navigate = useNavigate();
+  const howItWorksRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const finalCtaRef = useRef<HTMLDivElement>(null);
+
+  // Scroll reveal animation
+  useEffect(() => {
+    const handleScroll = () => {
+      const triggerBottom = window.innerHeight * 0.8;
+
+      if (howItWorksRef.current) {
+        const howItWorksTop = howItWorksRef.current.getBoundingClientRect().top;
+        if (howItWorksTop < triggerBottom) {
+          howItWorksRef.current.classList.add('visible');
+        }
+      }
+
+      if (featuresRef.current) {
+        const featuresTop = featuresRef.current.getBoundingClientRect().top;
+        if (featuresTop < triggerBottom) {
+          featuresRef.current.classList.add('visible');
+        }
+      }
+
+      if (finalCtaRef.current) {
+        const finalCtaTop = finalCtaRef.current.getBoundingClientRect().top;
+        if (finalCtaTop < triggerBottom) {
+          finalCtaRef.current.classList.add('visible');
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Initial check
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div style={{
@@ -162,18 +202,19 @@ export function Landing() {
               </li>
             ))}
           </ul>
-          <button className="btn-primary" style={{
-            padding: '0.5rem 1.2rem',
-            fontSize: '0.9rem',
-            transition: 'var(--transition-medium)'
-          }}
-            onClick={() => navigate('/onboard')}>
-            Get Started
-          </button>
+          <HoverLift liftAmount={2}>
+            <button className="btn-primary" style={{
+              padding: '0.5rem 1.2rem',
+              fontSize: '0.9rem'
+            }}
+              onClick={() => navigate('/onboard')}>
+              Get Started
+            </button>
+          </HoverLift>
         </nav>
 
         {/* ── HERO ── */}
-        <section className="hero" style={{
+        <section className="hero section-reveal" style={{
           minHeight: '100vh',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           textAlign: 'center', padding: '7rem 2rem 4rem',
@@ -207,34 +248,44 @@ export function Landing() {
           </p>
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '4rem' }}>
-            <button className="btn-primary" style={{
-              padding: '0.5rem 1.2rem',
-              fontSize: '0.9rem',
-              transition: 'var(--transition-medium)'
-            }}
-              onClick={() => navigate('/onboard')}>
-              Start Now →
-            </button>
-            <a href="https://t.me/SalesInjectBot" className="btn-secondary" target="_blank" rel="noopener noreferrer">
-              Open in Telegram
-            </a>
+            <HoverLift liftAmount={2}>
+              <button className="btn-primary" style={{
+                padding: '0.5rem 1.2rem',
+                fontSize: '0.9rem'
+              }}
+                onClick={() => navigate('/onboard')}>
+                Start Now →
+              </button>
+            </HoverLift>
+            <HoverLift liftAmount={2}>
+              <a href="https://t.me/SalesInjectBot" className="btn-secondary" target="_blank" rel="noopener noreferrer">
+                Open in Telegram
+              </a>
+            </HoverLift>
           </div>
 
           {/* ── STATS BAR ── */}
           <div className="stats-bar" style={{
             width: '100%',
-            maxWidth: '800px',
-            transition: 'var(--transition-medium)'
+            maxWidth: '800px'
           }}>
-            <Stat value={2500} label="Active Influencers" suffix="+" accent />
-            <Stat value={500} label="Campaigns Completed" suffix="+" accent />
-            <Stat value={98} label="Satisfaction Rate" suffix="%" />
-            <Stat value={24} label="Hour Payout" suffix="h" />
+            <HoverLift liftAmount={2}>
+              <Stat value={2500} label="Active Influencers" suffix="+" accent />
+            </HoverLift>
+            <HoverLift liftAmount={2}>
+              <Stat value={500} label="Campaigns Completed" suffix="+" accent />
+            </HoverLift>
+            <HoverLift liftAmount={2}>
+              <Stat value={98} label="Satisfaction Rate" suffix="%" />
+            </HoverLift>
+            <HoverLift liftAmount={2}>
+              <Stat value={24} label="Hour Payout" suffix="h" />
+            </HoverLift>
           </div>
         </section>
 
         {/* ── HOW IT WORKS ── */}
-        <section id="how-it-works" style={{ padding: '6rem 2rem' }}>
+        <section ref={howItWorksRef} id="how-it-works" className="section-reveal" style={{ padding: '6rem 2rem' }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
             <div style={{
               display: 'inline-block',
@@ -262,21 +313,18 @@ export function Landing() {
                 { num: '02', title: 'AI Matchmaking', desc: 'Our agents scan the 3D map to find the perfect local influencers or brands for your campaign.' },
                 { num: '03', title: 'Launch & Earn', desc: 'Deploy campaigns, track viral metrics in real-time, and get paid within 24 hours.' },
               ].map(step => (
-                <div key={step.num} className="step" style={{
-                  transition: 'var(--transition-medium)',
-                  border: '1px solid var(--border)'
-                }}>
+                <HoverLift liftAmount={4} key={step.num} className="step">
                   <div className="step-num">{step.num}</div>
                   <h3 style={{ fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.5rem' }}>{step.title}</h3>
                   <p style={{ color: 'var(--muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>{step.desc}</p>
-                </div>
+                </HoverLift>
               ))}
             </div>
           </div>
         </section>
 
         {/* ─── FEATURES ─── */}
-        <section id="features" style={{ padding: '6rem 2rem', background: 'rgba(255,255,255,0.015)' }}>
+        <section ref={featuresRef} id="features" className="section-reveal" style={{ padding: '6rem 2rem', background: 'rgba(255,255,255,0.015)' }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
             <div style={{
               display: 'inline-block',
@@ -311,22 +359,20 @@ export function Landing() {
                 { icon: '🏆', title: 'Gamified Leaderboard', desc: 'Compete with other influencers and brands. Earn badges, climb ranks, unlock exclusive perks.' },
                 { icon: '🎯', title: 'Smart Niche Targeting', desc: 'AI-powered niche matching ensures your campaign reaches the right audience every time.' },
               ].map(f => (
-                <div key={f.title} className="step" style={{
-                  padding: '1.8rem',
-                  transition: 'var(--transition-medium)',
-                  border: '1px solid var(--border)'
+                <HoverLift liftAmount={4} key={f.title} className="step" style={{
+                  padding: '1.8rem'
                 }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.75rem', transition: 'var(--transition-fast)' }}>{f.icon}</div>
                   <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>{f.title}</h3>
                   <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>{f.desc}</p>
-                </div>
+                </HoverLift>
               ))}
             </div>
           </div>
         </section>
 
         {/* ─── FINAL CTA ─── */}
-        <section style={{
+        <section className="section-reveal" style={{
           padding: '6rem 2rem',
           textAlign: 'center',
           position: 'relative',
@@ -349,16 +395,17 @@ export function Landing() {
             <p style={{ color: 'var(--muted)', fontSize: '1.1rem', marginBottom: '2rem' }}>
               Join thousands of brands and influencers already using SalesInject. No credit card required.
             </p>
-            <button className="btn-primary" style={{
-              padding: '1rem 2.5rem',
-              fontSize: '1.1rem',
-              transition: 'var(--transition-medium)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-              onClick={() => navigate('/onboard')}>
-              Start Now →
-            </button>
+            <PulseAnimation className="cta-pulse" pulseScale={1.03} pulseDuration="3s">
+              <button className="btn-primary" style={{
+                padding: '1rem 2.5rem',
+                fontSize: '1.1rem',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+                onClick={() => navigate('/onboard')}>
+                Start Now →
+              </button>
+            </PulseAnimation>
           </div>
         </section>
 

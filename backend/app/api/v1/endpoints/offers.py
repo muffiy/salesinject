@@ -4,7 +4,7 @@ Offers API — location-based brand offers that influencers claim and complete.
 import uuid
 import secrets
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List, Any
@@ -140,18 +140,11 @@ def claim_offer(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Influencer claims an offer — generates a unique tracking code."""
+    """Influencer claims an offer — uses atomic UPDATE to prevent race conditions."""
     try:
         oid = uuid.UUID(offer_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid offer_id format")
-
-    offer = db.query(Offer).filter(Offer.id == oid, Offer.status == "active").first()
-    if not offer:
-        raise HTTPException(status_code=404, detail="Offer not found or no longer active")
-
-    if offer.current_claims >= offer.max_claims:
-        raise HTTPException(status_code=409, detail="Offer is fully claimed")
 
     # Prevent double-claiming
     existing = db.query(OfferClaim).filter(
@@ -161,7 +154,27 @@ def claim_offer(
     if existing:
         raise HTTPException(status_code=409, detail="You already claimed this offer")
 
-    unique_code = f"{offer.promo_code}-{secrets.token_hex(3).upper()}"
+    unique_code = f"{secrets.token_hex(4).upper()}-{secrets.token_hex(3).upper()}"
+
+    # Atomic increment — fail if already at max_claims (handles concurrent claims)
+    from sqlalchemy import text
+    result = db.execute(
+        text(
+            "UPDATE offers SET current_claims = current_claims + 1 "
+            "WHERE id = :id AND current_claims < max_claims AND status = 'active' "
+            "RETURNING id, promo_code"
+        ),
+        {"id": oid},
+    ).fetchone()
+
+    if not result:
+        # Check why it failed to give a meaningful error
+        offer = db.query(Offer).filter(Offer.id == oid).first()
+        if not offer:
+            raise HTTPException(status_code=404, detail="Offer not found")
+        if offer.status != "active":
+            raise HTTPException(status_code=404, detail="Offer is no longer active")
+        raise HTTPException(status_code=409, detail="Offer is fully claimed")
 
     claim = OfferClaim(
         offer_id=oid,
@@ -169,7 +182,6 @@ def claim_offer(
         unique_code=unique_code,
     )
     db.add(claim)
-    offer.current_claims += 1
     db.commit()
     db.refresh(claim)
 
@@ -190,6 +202,11 @@ def complete_offer(
     db: Session = Depends(get_db),
 ):
     """Upload proof and trigger review — marks claim as pending_review."""
+    try:
+        uuid.UUID(offer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid offer_id format")
+
     claim = (
         db.query(OfferClaim)
         .filter(
@@ -217,6 +234,11 @@ def approve_claim(
     db: Session = Depends(get_db),
 ):
     """Brand approves a claim — triggers payout processing."""
+    try:
+        uuid.UUID(claim_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid claim_id format")
+
     claim = db.query(OfferClaim).filter(OfferClaim.id == claim_id).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
@@ -235,14 +257,29 @@ def approve_claim(
     return {"message": "Claim approved — payout processing", "claim_id": str(claim.id)}
 
 
+class WebhookSaleRequest(BaseModel):
+    promo_code: str
+    sale_amount: float
+
+
+def _verify_webhook_secret(request: Request) -> None:
+    """Validate X-Webhook-Secret header against configured secret."""
+    from ....core.config import settings
+    secret = request.headers.get("X-Webhook-Secret", "")
+    if not secret or secret != settings.WEBHOOK_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing webhook secret")
+
+
 @router.post("/webhooks/sale")
 def webhook_sale(
-    promo_code: str,
-    sale_amount: float,
+    payload: WebhookSaleRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    """External webhook from brand's POS/Shopify — track conversions."""
-    claim = db.query(OfferClaim).filter(OfferClaim.unique_code == promo_code).first()
+    """External webhook from brand's POS/Shopify — track conversions. Requires X-Webhook-Secret header."""
+    _verify_webhook_secret(request)
+
+    claim = db.query(OfferClaim).filter(OfferClaim.unique_code == payload.promo_code).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Promo code not found")
 
@@ -252,7 +289,7 @@ def webhook_sale(
         db.add(perf)
 
     perf.conversions += 1
-    perf.generated_revenue = float(perf.generated_revenue or 0) + sale_amount
+    perf.generated_revenue = float(perf.generated_revenue or 0) + payload.sale_amount
     db.commit()
 
     return {"status": "tracked", "conversions": perf.conversions, "total_revenue": float(perf.generated_revenue)}

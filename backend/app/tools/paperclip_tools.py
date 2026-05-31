@@ -37,9 +37,11 @@ def scout_influencers(niche: str, location: str) -> List[Dict[str, Any]]:
 
 
 @tool
-def analyze_and_rank(influencers_data: List[Dict[str, Any]], niche: str) -> str:
+def analyze_and_rank(influencers_data: List[Dict[str, Any]], niche: str, user_id: str) -> str:
     """Uses OpenRouter LLM to analyze and rank influencers by niche fit."""
     from ..services.openrouter_service import call_llm
+    from ..services.memory_injection import inject_memory_context
+    import asyncio
 
     if not influencers_data:
         return f"No influencers found for niche: {niche}"
@@ -54,7 +56,18 @@ def analyze_and_rank(influencers_data: List[Dict[str, Any]], niche: str) -> str:
         f"Influencer Data:\n{json.dumps(ranked, indent=2)}"
     )
 
-    return call_llm(prompt)
+    # Inject memory context
+    try:
+        context = asyncio.run(inject_memory_context(user_id, prompt))
+        if context:
+            full_prompt = f"{context}\n\n{prompt}"
+        else:
+            full_prompt = prompt
+    except Exception:
+        # Fallback to original prompt if memory injection fails
+        full_prompt = prompt
+
+    return call_llm(full_prompt)
 
 
 @tool
@@ -149,8 +162,10 @@ def generate_ad_idea_tool(user_id: str, prompt: str, db: Session = None) -> Dict
     """RAG-augmented content generation: fetch context from memories, call LLM, store result."""
     from ..services.openrouter_service import call_llm
     from ..models import PaperclipItem, AgentMemory
+    from ..services.memory_injection import inject_memory_context
+    import asyncio
 
-    # RAG: Fetch recent context if DB available
+    # RAG: Fetch recent context if DB available (existing logic)
     context_snippets = []
     if db:
         memories = (
@@ -175,13 +190,25 @@ def generate_ad_idea_tool(user_id: str, prompt: str, db: Session = None) -> Dict
 
     context_block = "\n".join(context_snippets) if context_snippets else "No prior context."
 
-    full_prompt = (
+    # Base prompt
+    base_prompt = (
         f"Generate creative marketing content based on this request:\n\n"
         f"Request: {prompt}\n\n"
         f"Context from previous work:\n{context_block}\n\n"
         f"Provide:\n1. A viral hook (max 15 words)\n2. A 60-second video script\n"
         f"3. Three caption options with hashtags\n4. Best posting time for Tunisia"
     )
+
+    # Inject memory context using the new service
+    try:
+        memory_context = asyncio.run(inject_memory_context(user_id, base_prompt))
+        if memory_context:
+            full_prompt = f"{memory_context}\n\n{base_prompt}"
+        else:
+            full_prompt = base_prompt
+    except Exception:
+        # Fallback to original prompt if memory injection fails
+        full_prompt = base_prompt
 
     result = call_llm(full_prompt)
 

@@ -51,7 +51,7 @@ def run_scout_mission(
     influencers = scout_influencers(niche=niche, location=location)
 
     # ── Step 2: Agent Zero analysis ────────────────────────────────────────
-    report = analyze_and_rank(influencers_data=influencers, niche=niche)
+    report = analyze_and_rank(influencers_data=influencers, niche=niche, user_id=user_id)
 
     # ── Step 3: Persist to scout_reports (map data for frontend) ──────────
     scout_result = save_scout_report(

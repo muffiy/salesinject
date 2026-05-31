@@ -7,7 +7,7 @@ from slowapi.util import get_remote_address
 
 from ..api import deps
 from ..models import User
-from .tasks import run_agent_task
+from ..tasks import run_agent_task
 
 router = APIRouter(prefix="/agent", tags=["Agent"])
 limiter = Limiter(key_func=get_remote_address)

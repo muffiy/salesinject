@@ -1,0 +1,123 @@
+### Task 9: Add Performance Optimization and Prefers-Reduced-Motion Support
+
+**Files:**
+- Modify: `/root/salesinject/frontend/src/index.css`
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx` (and other enhanced pages)
+
+- [ ] **Step 1: Add prefers-reduced-motion media query to respect user preferences**
+
+```css
+/* Add to index.css */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Disable non-essential animations but keep essential feedback */
+  .pulse-loader,
+  .ticker-content,
+  .progress-fill {
+    animation: none !important;
+  }
+  
+  /* Keep essential micro-interactions but reduce intensity */
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .step:hover,
+  .card:hover,
+  a:hover,
+  button:hover:not(:disabled) {
+    transform: translateY(-1px) !important;
+  }
+}
+```
+
+- [ ] **Step 2: Add will-change properties for better rendering performance**
+
+```css
+/* Add to index.css for elements that will be animated */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+.will-change-filter {
+  will-change: filter;
+}
+```
+
+- [ ] **Step 3: Apply will-change properties to interactive elements**
+
+```javascript
+// In enhanced components
+<button 
+  className="btn-primary will-change-transform"
+  onClick={handleClick}>
+  Click Me
+</button>
+```
+
+- [ ] **Step 4: Add requestAnimationFrame for scroll-based animations (if using JS)**
+
+```javascript
+/* Add to landing page or create a custom hook */
+import { useEffect, useState } from 'react';
+
+const useOnScreen = (ref, rootMargin = '0px') => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsIntersecting(entry.isIntersecting);
+      },
+      {
+        root,
+        rootMargin
+      }
+    );
+    
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+    
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [ref, rootMargin]);
+  
+  return isIntersecting;
+};
+
+// Usage in landing page sections
+const sectionRef = useRef(null);
+const isVisible = useOnScreen(sectionRef, '0px 0px -200px 0px');
+
+<section 
+  ref={sectionRef} 
+  className={`${isVisible ? 'section-reveal visible' : 'section-reveal'} `}
+  style={{ /* ... */ }}
+>
+  {/* Section content */}
+</section>
+```
+
+- [ ] **Step 5: Commit performance optimization and accessibility enhancements**
+
+```bash
+git add /root/salesinject/frontend/src/index.css
+git add /root/salesinject/frontend/src/pages/Landing.tsx
+git add /root/salesinject/frontend/src/pages/MissionFeed.tsx
+git add /root/salesinject/frontend/src/pages/MapPage.tsx
+git add /root/salesinject/frontend/src/pages/Onboarding.tsx
+git commit -m "feat: add performance optimization and prefers-reduced-motion support"
+```
+

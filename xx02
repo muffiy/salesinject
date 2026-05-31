@@ -1,0 +1,140 @@
+### Task 2: Enhance Landing Page Interactions
+
+**Files:**
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:50-132` (inline styles section)
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:165-169` (navigation)
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:205-212` (hero buttons)
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:215-220` (stats bar)
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:246-258` (how it works steps)
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:285-304` (features grid)
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx:332-335` (final CTA)
+
+- [ ] **Step 1: Update navigation button styles with hover/active effects**
+
+```javascript
+<button className="btn-primary" style={{ 
+  padding: '0.5rem 1.2rem', 
+  fontSize: '0.9rem',
+  transition: 'var(--transition-medium)'
+}}
+  onClick={() => navigate('/onboard')}>
+  Get Started
+</button>
+```
+
+- [ ] **Step 2: Enhance hero section buttons with micro-interactions**
+
+```javascript
+<div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '4rem' }}>
+  <button className="btn-primary" style={{ 
+    padding: '0.5rem 1.2rem', 
+    fontSize: '0.9rem',
+    transition: 'var(--transition-medium)'
+  }}
+    onClick={() => navigate('/onboard')}>
+    Start Now →
+  </button>
+  <a href="https://t.me/SalesInjectBot" className="btn-secondary" target="_blank" rel="noopener noreferrer">
+    Open in Telegram
+  </a>
+</div>
+```
+
+- [ ] **Step 3: Add hover effects to stats bar elements**
+
+```javascript
+<div className="stats-bar" style={{ 
+  width: '100%', 
+  maxWidth: '800px',
+  transition: 'var(--transition-medium)'
+}}>
+  {/* Stat components will inherit hover effects from base styles */}
+</div>
+```
+
+- [ ] **Step 4: Enhance "How It Works" step cards with lift and shadow**
+
+```javascript
+{[
+  { num: '01', title: 'Create Your Profile', desc: 'Sign up as a brand or influencer. Set your niche, budget, and campaign goals in under 2 minutes.' },
+  { num: '02', title: 'AI Matchmaking', desc: 'Our agents scan the 3D map to find the perfect local influencers or brands for your campaign.' },
+  { num: '03', title: 'Launch & Earn', desc: 'Deploy campaigns, track viral metrics in real-time, and get paid within 24 hours.' },
+].map(step => (
+  <div key={step.num} className="step" style={{
+    transition: 'var(--transition-medium)',
+    border: '1px solid var(--border)'
+  }}>
+    <div className="step-num">{step.num}</div>
+    <h3 style={{ fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.5rem' }}>{step.title}</h3>
+    <p style={{ color: 'var(--muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>{step.desc}</p>
+  </div>
+))}
+```
+
+- [ ] **Step 5: Enhance features grid cards with interactive effects**
+
+```javascript
+{[
+  { icon: '📍', title: '3D Map Discovery', desc: 'Find influencers and brand opportunities on a living 3D map. See who\'s active in your area in real-time.' },
+  { icon: '🤖', title: 'AI Agent Swarm', desc: 'Deploy scout agents to find matches, generate video hooks, and optimize campaigns automatically.' },
+  { icon: '💰', title: '24h Instant Payouts', desc: 'Get paid within 24 hours of campaign completion. No waiting weeks for your earnings.' },
+  { icon: '📊', title: 'Viral Score Tracking', desc: 'Real-time analytics on engagement, reach, and viral potential. Know what\'s working instantly.' },
+  { icon: '🏆', title: 'Gamified Leaderboard', desc: 'Compete with other influencers and brands. Earn badges, climb ranks, unlock exclusive perks.' },
+  { icon: '🎯', title: 'Smart Niche Targeting', desc: 'AI-powered niche matching ensures your campaign reaches the right audience every time.' },
+].map(f => (
+  <div key={f.title} className="step" style={{ 
+    padding: '1.8rem',
+    transition: 'var(--transition-medium)',
+    border: '1px solid var(--border)'
+  }}>
+    <div style={{ fontSize: '2rem', marginBottom: '0.75rem', transition: 'var(--transition-fast)' }}>{f.icon}</div>
+    <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>{f.title}</h3>
+    <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>{f.desc}</p>
+  </div>
+))}
+```
+
+- [ ] **Step 6: Enhance final CTA button with pulse animation**
+
+```javascript
+<button className="btn-primary" style={{ 
+  padding: '1rem 2.5rem', 
+  fontSize: '1.1rem',
+  transition: 'var(--transition-medium)',
+  position: 'relative',
+  overflow: 'hidden'
+}}
+  onClick={() => navigate('/onboard')}>
+  Start Now →
+</button>
+```
+
+- [ ] **Step 7: Add scroll reveal animations to landing page sections**
+
+```javascript
+/* Add to index.css */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.section-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Add to Landing.tsx section wrappers */
+<section id="how-it-works" style={{ 
+  padding: '6rem 2rem',
+  className: 'section-reveal'
+}}>
+```
+
+- [ ] **Step 8: Commit landing page interaction enhancements**
+
+```bash
+git add /root/salesinject/frontend/src/pages/Landing.tsx
+git commit -m "feat: enhance landing page with subtle motion and feedback system"
+```
+

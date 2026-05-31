@@ -21,5 +21,6 @@ class Settings(BaseSettings):
     PLATFORM_COMMISSION_RATE: float = float(os.getenv("PLATFORM_COMMISSION_RATE", "0.10"))
     AGENT_OS_DEBUG: bool = os.getenv("AGENT_OS_DEBUG", "False").lower() in ("true", "1", "t")
     SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
+    WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET", "insecure-default-change-me")
 
 settings = Settings()

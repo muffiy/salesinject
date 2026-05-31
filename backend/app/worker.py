@@ -11,7 +11,7 @@ celery_app = Celery(
     "salesinject",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks", "app.tasks.mission_tasks", "app.agent_os.nodes"],
+    include=["app.tasks", "app.tasks.mission_tasks", "app.agent_os.nodes", "app.ai_hub.tasks"],
 )
 
 celery_app.conf.update(

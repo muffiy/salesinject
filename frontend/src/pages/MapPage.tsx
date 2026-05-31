@@ -57,6 +57,7 @@ export function MapPage() {
   const [viewMode, setViewMode] = useState<'flat' | 'globe'>('flat');
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const [sheetAction, setSheetAction] = useState('connect');
+  const [isLoadingMapData, setIsLoadingMapData] = useState(false);
 
   const selected = data.find((d) => d.id === selectedId) ?? null;
 
@@ -64,7 +65,17 @@ export function MapPage() {
   const filteredData =
     activeFilter === 'all' ? data : data.filter((d) => d.type === activeFilter);
 
-  
+  // Simulate loading map data (in real app, this would be fetching from API or initializing map)
+  useEffect(() => {
+    setIsLoadingMapData(true);
+    // Simulate async loading
+    const timer = setTimeout(() => {
+      setIsLoadingMapData(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+
   const handleGlobeToggle = useCallback(() => {
     setViewMode((prev) => (prev === 'globe' ? 'flat' : 'globe'));
   }, []);
@@ -92,6 +103,37 @@ export function MapPage() {
           <GlobalMap data={filteredData} />
         </div>
       </div>
+
+      {/* Map loading overlay */}
+      {isLoadingMapData ? (
+        <div className="map-loading-overlay" style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(5, 8, 16, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10
+        }}>
+          <div className="skeleton-loader" style={{
+            width: '200px',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ color: 'var(--text)', margin: '0 0 16px 0' }}>Loading Map Data...</h3>
+            <div className="pulse-loader" style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid var(--accent)',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Gen-Z Top Filter Bar */}
       <GenZFilterBar options={FILTER_OPTIONS} active={activeFilter} onChange={setActiveFilter} />

@@ -56,12 +56,33 @@ export default function BottomNavigation({ hasActiveMission = false }: BottomNav
               cursor: 'pointer',
               position: 'relative',
               padding: '8px 4px',
-              transition: 'all 0.2s ease',
+              transition: 'var(--transition-medium)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={(e) => {
+              const btn = e.currentTarget;
+              btn.style.transform = 'translateY(-2px)';
+              btn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              const btn = e.currentTarget;
+              btn.style.transform = 'translateY(0)';
+              btn.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseDown={(e) => {
+              const btn = e.currentTarget;
+              btn.style.transform = 'translateY(0)';
+            }}
+            onMouseUp={(e) => {
+              const btn = e.currentTarget;
+              btn.style.transform = 'translateY(-2px)';
             }}
           >
             <div style={{
               fontSize: '20px',
               position: 'relative',
+              transition: 'var(--transition-fast)'
             }}>
               {tab.icon}
 
@@ -91,6 +112,7 @@ export default function BottomNavigation({ hasActiveMission = false }: BottomNav
                 height: '3px',
                 background: 'var(--war-cyan)',
                 borderRadius: '999px',
+                transition: 'var(--transition-medium)'
               }} />
             )}
           </button>

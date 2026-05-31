@@ -21,6 +21,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'var(--war-black)',
+      transition: 'var(--transition-medium)'
     }}>
       <h1 style={{
         fontSize: '48px',
@@ -31,6 +32,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         textTransform: 'uppercase',
         fontFamily: 'var(--font-display)',
         marginBottom: '32px',
+        transition: 'var(--transition-medium)'
       }}>
         SALESINJECT
       </h1>
@@ -40,12 +42,14 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         background: 'var(--war-gray-800)',
         borderRadius: '999px',
         overflow: 'hidden',
+        transition: 'var(--transition-medium)'
       }}>
         <div style={{
           height: '100%',
           width: '100%',
           background: 'var(--war-cyan)',
           animation: 'progress 2s linear forwards',
+          transition: 'var(--transition-medium)'
         }} />
       </div>
       <p style={{
@@ -53,6 +57,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         color: 'var(--si-muted)',
         fontFamily: 'var(--font-mono)',
         fontSize: '14px',
+        transition: 'var(--transition-medium)'
       }}>
         SYSTEM BOOTING...
       </p>
@@ -62,6 +67,16 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           @keyframes progress {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(0); }
+          }
+
+          /* Add subtle pulse to the h1 on load */
+          @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+          }
+
+          h1 {
+            animation: titlePulse 3s ease-in-out infinite;
           }
         `}
       </style>

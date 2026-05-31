@@ -45,26 +45,30 @@ const TYPE_ICONS: Record<string, string> = {
   hotspot: '🔥',
 };
 
-function makeIcon(point: MapDataPoint, selected: boolean) {
+function makeIcon(point: MapDataPoint, selected: boolean, hovered: boolean = false) {
   const color = TYPE_COLORS[point.type] ?? '#6c63ff';
   const icon = TYPE_ICONS[point.type] ?? '📍';
-  const size = selected ? 44 : 34;
+  const baseSize = 40;
+  const scale = hovered ? 1.2 : 1;
   const html = `<div style="
-    width:${size}px;height:${size}px;
+    width:${baseSize}px;height:${baseSize}px;
     background:${color}22;
-    border:2px solid ${color};
+    border:2px solid ${selected ? '#fff' : 'transparent'};
     border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    font-size:${selected ? 18 : 14}px;
-    box-shadow:0 0 ${selected ? 16 : 8}px ${color}88;
-    cursor:pointer;">${icon}</div>`;
-  return L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+    font-size:${baseSize * 0.4}px;
+    box-shadow:0 0 ${baseSize * 0.4}px ${color}88;
+    cursor:pointer;
+    transform: scale(${scale});
+    transition: transform 0.2s ease;">${icon}</div>`;
+  return L.divIcon({ html, className: '', iconSize: [baseSize, baseSize], iconAnchor: [baseSize / 2, baseSize / 2] });
 }
 
 export function DeckGLMap({ data, selectedId, onMarkerClick }: DeckGLMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const hoveredRefs = useRef(new Map<string, boolean>());
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -115,9 +119,11 @@ export function DeckGLMap({ data, selectedId, onMarkerClick }: DeckGLMapProps) {
     markersRef.current = [];
 
     data.forEach((point) => {
-      const marker = L.marker([point.lat, point.lon], {
-        icon: makeIcon(point, selectedId === point.id),
-      });
+      const pointKey = point.id;
+      const isSelected = selectedId === point.id;
+      const isHovered = hoveredRefs.current.get(pointKey) ?? false;
+      const icon = makeIcon(point, isSelected, isHovered);
+      const marker = L.marker([point.lat, point.lon], { icon });
 
       marker.bindTooltip(
         `<b>${point.name}</b><br/><span style="color:${TYPE_COLORS[point.type] ?? '#fff'}">${point.type.toUpperCase()}</span>${point.value ? ` · $${point.value}` : ''}`,
@@ -127,6 +133,18 @@ export function DeckGLMap({ data, selectedId, onMarkerClick }: DeckGLMapProps) {
       if (onMarkerClick) {
         marker.on('click', () => onMarkerClick(point));
       }
+
+      marker.on('mouseover', () => {
+        hoveredRefs.current.set(pointKey, true);
+        const newIcon = makeIcon(point, isSelected, true);
+        marker.setIcon(newIcon);
+      });
+
+      marker.on('mouseout', () => {
+        hoveredRefs.current.set(pointKey, false);
+        const newIcon = makeIcon(point, isSelected, false);
+        marker.setIcon(newIcon);
+      });
 
       marker.addTo(map);
       markersRef.current.push(marker);

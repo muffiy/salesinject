@@ -1,0 +1,69 @@
+### Task 8: Integrate Reusable Components Across Enhanced Areas
+
+**Files:**
+- Modify: `/root/salesinject/frontend/src/pages/Landing.tsx`
+- Modify: `/root/salesinject/frontend/src/pages/MissionFeed.tsx`
+- Modify: `/root/salesinject/frontend/src/pages/MapPage.tsx`
+- Modify: `/root/salesinject/frontend/src/pages/Onboarding.tsx`
+- Modify: `/root/salesinject/frontend/src/components/BottomNavigation.tsx`
+- Modify: `/root/salesinject/frontend/src/components/LiveTicker.tsx`
+
+- [ ] **Step 1: Replace manual hover/lift effects with HoverLift component in landing page**
+
+```typescript
+// Import at top
+import { HoverLift } from '@/components/HoverLift';
+
+// Usage in landing page
+<HoverLift className="step" liftAmount={4}>
+  <div className="step-num">{step.num}</div>
+  <h3 style={{ fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.5rem' }}>{step.title}</h3>
+  <p style={{ color: 'var(--muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>{step.desc}</p>
+</HoverLift>
+```
+
+- [ ] **Step 2: Replace manual ripple effects with RippleEffect component in mission feed**
+
+```typescript
+// Import at top
+import { RippleEffect } from '@/components/RippleEffect';
+
+// Usage in mission feed
+<RippleEffect onClick={handleAction}>
+  <button className="btn-primary">
+    Accept Mission
+  </button>
+</RippleEffect>
+```
+
+- [ ] **Step 3: Add pulse animation to primary CTAs using PulseAnimation component**
+
+```typescript
+// Import at top
+import { PulseAnimation } from '@/components/PulseAnimation';
+
+// Usage in landing page CTA
+<PulseAnimation className="cta-pulse" pulseScale={1.03} pulseDuration="3s">
+  <button className="btn-primary" style={{ 
+    padding: '1rem 2.5rem', 
+    fontSize: '1.1rem',
+    transition: 'var(--transition-medium)'
+  }}
+    onClick={() => navigate('/onboard')}>
+    Start Now →
+  </button>
+</PulseAnimation>
+```
+
+- [ ] **Step 4: Commit integration of reusable components**
+
+```bash
+git add /root/salesinject/frontend/src/pages/Landing.tsx
+git add /root/salesinject/frontend/src/pages/MissionFeed.tsx
+git add /root/salesinject/frontend/src/pages/MapPage.tsx
+git add /root/salesinject/frontend/src/pages/Onboarding.tsx
+git add /root/salesinject/frontend/src/components/BottomNavigation.tsx
+git add /root/salesinject/frontend/src/components/LiveTicker.tsx
+git commit -m "feat: integrate reusable interaction components across enhanced areas"
+```
+

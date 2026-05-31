@@ -57,6 +57,29 @@ export function GenZFloatingControls({ actions, position = 'top-right' }: GenZFl
           onClick={a.onClick}
           aria-label={a.label}
           title={a.label}
+          style={{
+            transition: 'var(--transition-medium)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+          onMouseEnter={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(-2px)';
+            btn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(0)';
+            btn.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+          }}
+          onMouseDown={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(0)';
+          }}
+          onMouseUp={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(-2px)';
+          }}
         >
           {a.icon}
         </button>
@@ -87,6 +110,29 @@ export function GenZBottomBar({ options, active, onChange }: GenZBottomBarProps)
           key={opt.id}
           className={`genz-pill ${active === opt.id ? 'active' : ''}`}
           onClick={() => onChange(opt.id)}
+          style={{
+            transition: 'var(--transition-medium)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+          onMouseEnter={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(-2px)';
+            btn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(0)';
+            btn.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+          }}
+          onMouseDown={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(0)';
+          }}
+          onMouseUp={(e) => {
+            const btn = e.currentTarget;
+            btn.style.transform = 'translateY(-2px)';
+          }}
         >
           <span className="genz-pill-icon">{opt.icon}</span>
           <span>{opt.label}</span>
@@ -137,6 +183,29 @@ export function GenZBottomSheet({
                 key={a.id}
                 className={`genz-action-btn ${activeAction === a.id ? 'active' : ''}`}
                 onClick={() => onActionChange(a.id)}
+                style={{
+                  transition: 'var(--transition-medium)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transform = 'translateY(-2px)';
+                  btn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transform = 'translateY(0)';
+                  btn.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseDown={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transform = 'translateY(0)';
+                }}
+                onMouseUp={(e) => {
+                  const btn = e.currentTarget;
+                  btn.style.transform = 'translateY(-2px)';
+                }}
               >
                 <span className="genz-action-icon">{a.icon}</span>
                 <span>{a.label}</span>

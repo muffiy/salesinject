@@ -10,6 +10,9 @@ except Exception:
 dp = Dispatcher()
 router = Router()
 
+# Import and include onboarding conversation router
+from app.bot.onboarding_conversation import router as onboarding_router
+
 
 @router.message(Command("start"))
 async def cmd_start(message: Message):
@@ -68,3 +71,4 @@ async def cmd_offers(message: Message):
 
 
 dp.include_router(router)
+dp.include_router(onboarding_router)

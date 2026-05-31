@@ -5,6 +5,8 @@ import ActiveMission from './pages/ActiveMission';
 import IntelHub from './pages/IntelHub';
 import LoopEngine from './pages/LoopEngine';
 import { MapPage } from './pages/MapPage';
+import { Landing } from './pages/Landing';
+import { Onboarding } from './pages/Onboarding';
 import SplashScreen from './components/SplashScreen';
 import PermissionGate from './components/PermissionGate';
 import BottomNavigation from './components/BottomNavigation';
@@ -58,16 +60,40 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<MissionFeed />} />
-            <Route path="/mission/:offerId" element={<ActiveMission />} />
-            <Route path="/intel" element={<IntelHub />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/replay/:traceId" element={<LoopEngine />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </MainLayout>
+        <Routes>
+          {/* Public landing + onboarding (no auth layout) */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/onboard" element={<Onboarding />} />
+
+          {/* Authenticated app routes */}
+          <Route path="/app" element={
+            <MainLayout>
+              <MissionFeed />
+            </MainLayout>
+          } />
+          <Route path="/mission/:offerId" element={
+            <MainLayout>
+              <ActiveMission />
+            </MainLayout>
+          } />
+          <Route path="/intel" element={
+            <MainLayout>
+              <IntelHub />
+            </MainLayout>
+          } />
+          <Route path="/map" element={
+            <MainLayout>
+              <MapPage />
+            </MainLayout>
+          } />
+          <Route path="/replay/:traceId" element={
+            <MainLayout>
+              <LoopEngine />
+            </MainLayout>
+          } />
+          <Route path="/app/*" element={<Navigate to="/app" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );

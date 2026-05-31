@@ -1,0 +1,76 @@
+### Task 11: Final Integration and Documentation
+
+**Files:**
+- Modify: `/root/salesinject/frontend/src/README.md` (or create INTERACTIONS.md)
+- Modify: `/root/salesinject/frontend/src/components/README.md` (if exists)
+
+- [ ] **Step 1: Update documentation with interaction guidelines**
+
+```markdown
+# Subtle Motion & Feedback System
+
+## Overview
+This system adds subtle micro-interactions and feedback mechanisms throughout the frontend to create a more engaging, responsive user experience.
+
+## Components
+
+### HoverLift
+Provides subtle lift effect on hover for interactive elements.
+```tsx
+import { HoverLift } from '@/components/HoverLift';
+
+<HoverLift liftAmount={3}>
+  <Button>Click Me</Button>
+</HoverLift>
+```
+
+### RippleEffect
+Adds material-design inspired ripple effect on click.
+```tsx
+import { RippleEffect } from '@/components/RippleEffect';
+
+<RippleEffect onClick={handleAction}>
+  <Button>Action</Button>
+</RippleEffect>
+```
+
+### PulseAnimation
+Applies subtle pulsing animation to draw attention.
+```tsx
+import { PulseAnimation } from '@/components/PulseAnimation';
+
+<PulseAnimation className="cta-pulse" pulseScale={1.05} pulseDuration="3s">
+  <Button>Primary CTA</Button>
+</PulseAnimation>
+```
+
+## Usage Guidelines
+
+1. **Use HoverLift** for buttons, cards, and any element that benefits from lift-on-hover
+2. **Use RippleEffect** for buttons and interactive elements that need click feedback
+3. **Use PulseAnimation** sparingly for important CTAs or elements needing visual emphasis
+4. **Respect prefers-reduced-motion** - all animations automatically respect user preferences
+5. **Performance conscious** - all animations use GPU-accelerated properties (transform, opacity) where possible
+
+## CSS Variables
+All interactions use CSS variables defined in `index.css`:
+- `--transition-fast`, `--transition-medium`, `--transition-slow`
+- `--hover-lift`, `--active-press`
+- `--hover-shadow`, `--active-shadow`
+- `--ripple-color`, `--pulse-delay`
+
+## Testing
+Run interaction tests with:
+```bash
+npm test -- src/__tests__/interaction.test.tsx
+```
+```
+
+- [ ] **Step 2: Commit documentation updates**
+
+```bash
+git add /root/salesinject/frontend/src/README.md
+git add /root/salesinject/frontend/src/components/README.md
+git commit -m "docs: add documentation for subtle motion and feedback system"
+```
+

@@ -8,6 +8,15 @@ to ensure thread-safe operations across distributed workers.
 from typing import Optional
 from ..core.redis_client import r
 
+# Skill-based cost mapping
+SKILL_COSTS = {
+    "scout": 0.02,
+    "counter_boost": 0.05,
+    "shield": 0.01,
+    "repurpose_hook": 0.005,
+    "generate_content": 0.01,
+}
+
 # Lua script for atomic budget check and update
 LUA_CHECK_BUDGET = """
 local current = tonumber(redis.call('get', KEYS[1]) or '0')
@@ -107,3 +116,20 @@ def get_budget_limit(user_id: str) -> float:
     key = f"budget_limit:{user_id}"
     limit = r.get(key)
     return float(limit) if limit else 1.0
+
+
+def deduct_for_skill(user_id: str, skill_name: str) -> float:
+    """
+    Deduct credits based on skill type and complexity.
+
+    Args:
+        user_id: User UUID as string
+        skill_name: Name of the skill being executed
+
+    Returns:
+        Amount of credits deducted
+    """
+    cost = SKILL_COSTS.get(skill_name, 0.01)
+    check_budget(user_id, cost)
+    add_cost(user_id, cost)
+    return cost

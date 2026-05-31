@@ -1,0 +1,2 @@
+{"type":"server-started","port":50729,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:50729","screen_dir":"/root/salesinject/.superpowers/brainstorm/57160-1778366350/content","state_dir":"/root/salesinject/.superpowers/brainstorm/57160-1778366350/state"}
+{"type":"server-stopped","reason":"idle timeout"}

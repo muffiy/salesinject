@@ -3,7 +3,7 @@ import json
 from app.core.config import settings
 
 
-def analyze_influencers(influencers_data: List[Dict[str, Any]], niche: str) -> str:
+def analyze_influencers(influencers_data: List[Dict[str, Any]], niche: str, context: str = "") -> str:
     """
     Analyzes and ranks an extracted list of influencer profiles using OpenAI.
     """
@@ -16,7 +16,7 @@ def analyze_influencers(influencers_data: List[Dict[str, Any]], niche: str) -> s
     # Pre-filter to reduce token size — top 10 by followers
     ranked = sorted(influencers_data, key=lambda x: x.get('followers', 0), reverse=True)[:10]
 
-    prompt = f"""
+    base_prompt = f"""
     You are an expert Influencer Marketing Agent. I have a list of influencers in the '{niche}' niche.
     Please analyze these profiles and provide a concise, ranked report of the top 3 best fits for a brand campaign.
     For each of the top 3, explain WHY they are a good fit based on their metrics.
@@ -24,6 +24,10 @@ def analyze_influencers(influencers_data: List[Dict[str, Any]], niche: str) -> s
     Influencer Data:
     {json.dumps(ranked, indent=2)}
     """
+
+    prompt = base_prompt
+    if context:
+        prompt = f"{context}\n\n{base_prompt}"
 
     try:
         from openai import OpenAI

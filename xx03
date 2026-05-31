@@ -1,0 +1,95 @@
+### Task 3: Enhance Mission Feed Interactions
+
+**Files:**
+- Modify: `/root/salesinject/frontend/src/pages/MissionFeed.tsx:1-50`
+- Modify: `/root/salesinject/frontend/src/components/StoryCard.tsx:1-50` (if exists)
+
+- [ ] **Step 1: Add hover lift to mission feed items**
+
+```javascript
+/* In MissionFeed.tsx */
+{missions.map(mission => (
+  <div key={mission.id} className="mission-card" style={{
+    transition: 'var(--transition-medium)',
+    border: '1px solid var(--border)',
+    borderRadius: '12px'
+  }}>
+    {/* Mission content */}
+  </div>
+))}
+```
+
+- [ ] **Step 2: Add ripple effect to mission action buttons**
+
+```javascript
+/* Mission action buttons */
+<div className="ripple-container" style={{ 
+  position: 'relative',
+  overflow: 'hidden'
+}}>
+  <button className="btn-primary" onClick={handleAction}>
+    Accept Mission
+  </button>
+</div>
+```
+
+- [ ] **Step 3: Add loading skeleton states for mission feed**
+
+```javascript
+/* Loading state */
+{isLoading ? (
+  <div className="skeleton-loader" style={{ 
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    padding: '24px'
+  }}>
+    {/* Skeleton cards */}
+    {[1,2,3].map((_, i) => (
+      <div key={i} className="skeleton-card" style={{
+        height: '120px',
+        background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.5s infinite',
+        borderRadius: '8px'
+      }}
+      />
+    ))}
+  </div>
+) : (
+  /* Normal mission feed content */
+)}
+```
+
+- [ ] **Step 4: Add CSS for skeleton loader and shimmer effect**
+
+```javascript
+/* Add to index.css */
+.skeleton-loader {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.skeleton-card {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+```
+
+- [ ] **Step 5: Commit mission feed interaction enhancements**
+
+```bash
+git add /root/salesinject/frontend/src/pages/MissionFeed.tsx
+git commit -m "feat: enhance mission feed with subtle motion and feedback system"
+```
+

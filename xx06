@@ -1,0 +1,124 @@
+### Task 6: Enhance Bottom Navigation and Live Ticker Interactions
+
+**Files:**
+- Modify: `/root/salesinject/frontend/src/components/BottomNavigation.tsx:1-50`
+- Modify: `/root/salesinject/frontend/src/components/LiveTicker.tsx:1-50`
+
+- [ ] **Step 1: Enhance bottom navigation items with hover/active effects**
+
+```javascript
+/* Bottom navigation */
+<nav className="bottom-navigation" style={{
+  position: 'fixed',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: '60px',
+  background: 'rgba(5, 8, 16, 0.9)',
+  backdropFilter: 'blur(12px)',
+  borderTop: '1px solid var(--border)',
+  display: 'flex',
+  justifyContent: 'space-around',
+  alignItems: 'center',
+  zIndex: 1000
+}}>
+  {navigationItems.map((item, index) => (
+    <button 
+      key={index} 
+      className="nav-item" 
+      style={{
+        transition: 'var(--transition-medium)',
+        color: item.isActive ? 'var(--text)' : 'var(--muted)',
+        background: item.isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+        borderRadius: '50%',
+        width: '50px',
+        height: '50px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={() => selectItem(item.id)}
+    >
+      {item.icon}
+    </button>
+  ))}
+</nav>
+```
+
+- [ ] **Step 2: Add pulse animation to live ticker elements**
+
+```javascript
+/* Live ticker */
+<div className="live-ticker" style={{
+  position: 'fixed',
+  bottom: '60px',
+  left: 0,
+  right: 0,
+  height: '20px',
+  background: 'rgba(16, 185, 129, 0.1)',
+  borderTop: '1px solid rgba(16, 185, 129, 0.2)',
+  display: 'flex',
+  alignItems: 'center',
+  padding: '0 16px',
+  fontSize: '0.85rem',
+  color: 'var(--green)',
+  overflow: 'hidden'
+}}>
+  <div className="ticker-content" style={{
+    display: 'flex',
+    gap: '16px',
+    animation: 'tickerMove 20s linear infinite'
+  }}>
+    {/* Ticker items */}
+  </div>
+</div>
+
+/* Ticker item hover effect */
+.ticker-item {
+  transition: 'var(--transition-fast)',
+  padding: '4px 8px',
+  borderRadius: '4px'
+}
+
+.ticker-item:hover {
+  background: 'rgba(16, 185, 129, 0.2)',
+  transform: 'scale(1.05)'
+}
+
+/* Ticker animation */
+@keyframes tickerMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+```
+
+- [ ] **Step 3: Add subtle float animation to live ticker icons**
+
+```javascript
+/* Animated icons in ticker */
+.ticker-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+```
+
+- [ ] **Step 4: Commit bottom navigation and live ticker enhancements**
+
+```bash
+git add /root/salesinject/frontend/src/components/BottomNavigation.tsx
+git add /root/salesinject/frontend/src/components/LiveTicker.tsx
+git commit -m "feat: enhance bottom navigation and live ticker with subtle motion and feedback system"
+```
+

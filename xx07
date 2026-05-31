@@ -1,0 +1,203 @@
+### Task 7: Create Reusable Interaction Components
+
+**Files:**
+- Create: `/root/salesinject/frontend/src/components/RippleEffect.tsx`
+- Create: `/root/salesinject/frontend/src/components/HoverLift.tsx`
+- Create: `/root/salesinject/frontend/src/components/PulseAnimation.tsx`
+- Modify: `/root/salesinject/frontend/src/components/index.ts`
+
+- [ ] **Step 1: Create reusable RippleEffect component**
+
+```typescript
+// /root/salesinject/frontend/src/components/RippleEffect.tsx
+import { useEffect, useRef } from 'react';
+
+interface RippleEffectProps {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
+const RippleEffect: React.FC<RippleEffectProps> = ({ 
+  children, 
+  className = '', 
+  onClick 
+}) => {
+  const rippleRef = useRef<HTMLDivElement>(null);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!rippleRef.current) return;
+
+    // Create ripple element
+    const ripple = document.createElement('span');
+    const diameter = Math.max(rippleRef.current.clientWidth, rippleRef.current.clientHeight);
+    const radius = diameter / 2;
+    
+    ripple.style.width = ripple.style.height = `${diameter}px`;
+    ripple.style.left = `${e.clientX - rippleRef.current.getBoundingClientRect().left - radius}px`;
+    ripple.style.top = `${e.clientY - rippleRef.current.getBoundingClientRect().top - radius}px`;
+    ripple.className = 'ripple';
+    ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+    
+    rippleRef.current.appendChild(ripple);
+    
+    // Remove ripple after animation completes
+    setTimeout(() => {
+      ripple.remove();
+    }, 600);
+    
+    // Call original onClick handler
+    if (onClick) {
+      onClick();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup any remaining ripples
+      rippleRef.current?.querySelectorAll('.ripple').forEach(ripple => ripple.remove());
+    };
+  }, []);
+
+  return (
+    <div 
+      ref={rippleRef}
+      className={`ripple-container ${className}`} 
+      onClick={handleClick}
+      style={{ 
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: 'pointer'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+export default RippleEffect;
+```
+
+- [ ] **Step 2: Create reusable HoverLift component**
+
+```typescript
+// /root/salesinject/frontend/src/components/HoverLift.tsx
+import { useState } from 'react';
+
+interface HoverLiftProps {
+  children: React.ReactNode;
+  className?: string;
+  liftAmount?: number; // pixels
+  transitionDuration?: string;
+}
+
+const HoverLift: React.FC<HoverLiftProps> = ({ 
+  children, 
+  className = '',
+  liftAmount = 2,
+  transitionDuration = '200ms'
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div 
+      className={className}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        transition: `transform ${transitionDuration} ease-in-out`,
+        transform: isHovered ? `translateY(-${liftAmount}px)` : 'translateY(0)'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+export default HoverLift;
+```
+
+- [ ] **Step 3: Create reusable PulseAnimation component**
+
+```typescript
+// /root/salesinject/frontend/src/components/PulseAnimation.tsx
+import { useEffect, useRef } from 'react';
+
+interface PulseAnimationProps {
+  children: React.ReactNode;
+  className?: string;
+  pulseScale?: number; // scale factor
+  pulseDuration?: string; // animation duration
+  delay?: string; // delay before pulse starts
+}
+
+const PulseAnimation: React.FC<PulseAnimationProps> = ({ 
+  children, 
+  className = '',
+  pulseScale = 1.05,
+  pulseDuration = '2s',
+  delay = '0s'
+}) => {
+  useEffect(() => {
+    const element = document.querySelector(`.${className.split(' ')[0]}`);
+    if (element) {
+      element.style.animation = `pulse ${pulseDuration} ease-in-out infinite ${delay}`;
+      element.style.display = 'inline-block';
+    }
+    
+    return () => {
+      if (element) {
+        element.style.animation = 'none';
+      }
+    };
+  }, [className, pulseDuration, delay]);
+
+  return (
+    <div 
+      className={className}
+      style={{
+        position: 'relative'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+export default PulseAnimation;
+```
+
+- [ ] **Step 4: Add pulse animation keyframes to index.css**
+
+```css
+/* Add to index.css */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(var(--pulse-scale, 1.05));
+  }
+}
+```
+
+- [ ] **Step 5: Export components from index.ts**
+
+```typescript
+// /root/salesinject/frontend/src/components/index.ts
+export { default as RippleEffect } from './RippleEffect';
+export { default as HoverLift } from './HoverLift';
+export { default as PulseAnimation } from './PulseAnimation';
+// ... existing exports
+```
+
+- [ ] **Step 6: Commit reusable interaction components**
+
+```bash
+git add /root/salesinject/frontend/src/components/RippleEffect.tsx
+git add /root/salesinject/frontend/src/components/HoverLift.tsx
+git add /root/salesinject/frontend/src/components/PulseAnimation.tsx
+git add /root/salesinject/frontend/src/components/index.ts
+git commit -m "feat: create reusable interaction components for subtle motion and feedback system"
+```
+
